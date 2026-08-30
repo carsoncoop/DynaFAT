@@ -26,6 +26,12 @@ enum CompressorToggle {
     CompOn,
     CompOff
 };
+
+enum EnvelopeToggle {
+    EnvOn,
+    EnvOff
+};
+
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
 public:
