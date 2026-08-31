@@ -2,7 +2,6 @@
 
 #include <juce_audio_utils/gui/juce_AudioVisualiserComponent.h>
 #include "PluginProcessor.h"
-#include "Square.h"
 
 
 //==============================================================================
