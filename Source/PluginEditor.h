@@ -19,7 +19,6 @@ public:
     void timerCallback() override;
 
 private:
-    Square firstObj;
     AudioPluginAudioProcessor& processorRef;
 
     juce::Label distortionHeader{"distortionHeader", "DISTORTION"};
