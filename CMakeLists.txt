@@ -1,3 +1,5 @@
+#PC Path: "F:/ProgramData/Ableton/Live 9 Standard"
+#Laptop Path: 
 #To Do: Make Vital OTT instead?
 #Download Vital and test OTT sound.
 #Properly split the 3 bands in process block first.
@@ -50,7 +52,7 @@ juce_add_plugin(${PROJECT_NAME}
         EDITOR_WANTS_KEYBOARD_FOCUS FALSE
         JUCE_VST3_CAN_REPLACE_VST2 FALSE
         COPY_PLUGIN_AFTER_BUILD TRUE
-        VST3_COPY_DIR "C:/Users/tf2ma/Documents/Ableton/VST Plugins"
+        VST3_COPY_DIR "F:/ProgramData/Ableton/Live 9 Standard"
         PLUGIN_MANUFACTURER_CODE Gktn
         PLUGIN_CODE GClp
         FORMATS VST3 Standalone
