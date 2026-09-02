@@ -1,5 +1,5 @@
 #PC Path: "F:/ProgramData/Ableton/Live 9 Standard"
-#Laptop Path: 
+#Laptop Path: "C:/Users/tf2ma/Documents/Ableton/VST Plugins"
 #To Do: Make Vital OTT instead?
 #Download Vital and test OTT sound.
 #Properly split the 3 bands in process block first.
