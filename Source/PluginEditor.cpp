@@ -145,7 +145,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     startTimerHz(60);
     addAndMakeVisible(visual);
 
-    addAndMakeVisible(firstObj);
 
     preLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(preLabel);
