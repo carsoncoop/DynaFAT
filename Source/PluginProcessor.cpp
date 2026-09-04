@@ -139,6 +139,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
         for (int channel = 0; channel < totalNumInputChannels; ++channel) {
             //Compute input signal's envelope
+            auto* input = buffer.getReadPointer(channel);
+            preEnv[channel] = envelopeFollower.followEnv(input[sample]);
         }
     }
     //Distortion Starts Here--------------------------------------------------------------------------------------------

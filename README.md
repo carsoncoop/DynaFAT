@@ -26,3 +26,12 @@ Known bugs:
 Reminder for Developer:
 - PC VST Path: "F:/ProgramData/Ableton/Live 9 Standard"
 - Laptop VST Path: "C:/Users/tf2ma/Documents/Ableton/VST Plugins"
+
+Current To-Do List:
+- Implement Distortion Class & ensure it works the same as before when called in processBlock
+- Remove enumerated parameters in the PluginProcessor for OOP implementation
+
+Effect Class Layout:
+- Member variables store state of parameters through setter functions
+- Member functions process single samples of audio, only passing in the sample as a parameter
+   → Access member variables for parameter values

@@ -35,6 +35,8 @@ set(SourceFiles
         Source/PluginProcessor.h
         Source/EnvelopeFollower.h
         Source/EnvelopeFollower.cpp
+        Source/Distortion.h
+        Source/Distortion.cpp
 )
 
 # Change these to your own preferences
