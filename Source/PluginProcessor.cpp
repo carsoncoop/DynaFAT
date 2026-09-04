@@ -17,6 +17,19 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
 
+    //Envelop Follower Preparation--------------------------------------------------------------------------------------
+    smoothedEnvAttack.reset(sampleRate, 0.01f);
+    smoothedEnvAttack.setCurrentAndTargetValue(state.getRawParameterValue("envAttack")->load());
+    smoothedEnvRelease.reset(sampleRate, 0.01f);
+    smoothedEnvRelease.setCurrentAndTargetValue(state.getRawParameterValue("envRelease")->load());
+    smoothedGainMatchAttack.reset(sampleRate, 0.01f);
+    smoothedGainMatchAttack.setCurrentAndTargetValue(state.getRawParameterValue("gainMatchAttack")->load());
+    smoothedGainMatchRelease.reset(sampleRate, 0.01f);
+    smoothedGainMatchRelease.setCurrentAndTargetValue(state.getRawParameterValue("releaseMatchRelease")->load());
+    envelopeFollower.prepare(getSampleRate(),
+        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue(),
+        smoothedGainMatchAttack.getCurrentValue(), smoothedGainMatchRelease.getCurrentValue());
+
     //Distortion Preparation--------------------------------------------------------------------------------------------
     filter.prepare(spec);
     filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
@@ -110,7 +123,26 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
+    //Pre Envelope Follower---------------------------------------------------------------------------------------------
+    smoothedEnvAttack.setTargetValue(state.getRawParameterValue("envAttack")->load());
+    smoothedEnvRelease.setTargetValue(state.getRawParameterValue("envRelease")->load());
+    smoothedGainMatchAttack.setTargetValue(state.getRawParameterValue("gainMatchAttack")->load());
+    smoothedGainMatchRelease.setTargetValue(state.getRawParameterValue("releaseMatchRelease")->load());
+    envelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
+    envelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
+    envelopeFollower.setGainAttack(smoothedGainMatchAttack.getNextValue());
+    envelopeFollower.setGainRelease(smoothedGainMatchRelease.getNextValue());
 
+    std::array<float, 2> preEnv = {0.0f, 0.0f};
+    std::array<float, 2> postEnv = {0.0f, 0.0f};
+
+    for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
+        for (int channel = 0; channel < totalNumInputChannels; ++channel) {
+            //Compute input signal's envelope
+            auto* input = buffer.getReadPointer(channel);
+            preEnv[channel] = envelopeFollower.followEnv(input[sample]);
+        }
+    }
     //Distortion Starts Here--------------------------------------------------------------------------------------------
 
     //Takes linear gain value, and converts it to decibel representation
@@ -259,12 +291,56 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         const float releaseMs = smoothedRelease.getNextValue();
         const auto sampleRate = static_cast<float>(getSampleRate());
 
-        const float lowAttack = std::exp(-1.0f / (juce::jmax(0.1f, attackMs * 0.85f) * 0.001f * sampleRate));
-        const float midAttack = std::exp(-1.0f / (juce::jmax(0.1f, attackMs) * 0.001f * sampleRate));
-        const float highAttack = std::exp(-1.0f / (juce::jmax(0.1f, attackMs * 1.15f) * 0.001f * sampleRate));
-        const float lowRelease = std::exp(-1.0f / (juce::jmax(0.1f, releaseMs * 1.2f) * 0.001f * sampleRate));
-        const float midRelease = std::exp(-1.0f / (juce::jmax(0.1f, releaseMs) * 0.001f * sampleRate));
-        const float highRelease = std::exp(-1.0f / (juce::jmax(0.1f, releaseMs * 0.9f) * 0.001f * sampleRate));
+        const auto dbToLinear = [](float db) {
+            return std::pow(10.0f, db * 0.05f);
+        };
+
+        const auto calculateBandGain = [&](float envelope, float lowerThresholdDb, float upperThresholdDb,
+                                          float lowerRatio, float upperRatio) {
+            const float lowerThreshold = dbToLinear(lowerThresholdDb);
+            const float upperThreshold = dbToLinear(upperThresholdDb);
+            const float safeEnvelope = std::max(envelope, 1.0e-6f);
+
+            const float lowerDelta = lowerThreshold / safeEnvelope;
+            const float upperDelta = upperThreshold / safeEnvelope;
+            const float lowerMult = std::pow(lowerDelta, 1.0f / std::max(1.0f, lowerRatio));
+            const float upperMult = std::pow(upperDelta, 1.0f / std::max(1.0f, upperRatio));
+            return juce::jlimit(0.0f, 32.0f, upperMult * lowerMult);
+        };
+
+        const auto processBand = [&](juce::AudioBuffer<float>& bandBuffer,
+                                    float lowerThresholdDb, float upperThresholdDb,
+                                    float lowerRatio, float upperRatio,
+                                    float inputGainDb, float outputGainDb,
+                                    float attackScaleMs, float releaseScaleMs,
+                                    std::vector<float>& envelope) {
+            const float attackSamples = std::max(1.0f, attackScaleMs * 0.001f * sampleRate);
+            const float releaseSamples = std::max(1.0f, releaseScaleMs * 0.001f * sampleRate);
+            const float attackCoeff = 1.0f / (attackSamples + 1.0f);
+            const float releaseCoeff = 1.0f / (releaseSamples + 1.0f);
+            const float inputGain = dbToLinear(inputGainDb);
+            const float outputGain = dbToLinear(outputGainDb);
+
+            for (int channel = 0; channel < totalNumInputChannels; ++channel)
+            {
+                auto* band = bandBuffer.getWritePointer(channel);
+                for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+                {
+                    const float inputSample = band[sample] * inputGain;
+                    const float sampleSquared = inputSample * inputSample;
+                    float& bandEnvelope = envelope[channel];
+
+                    if (sampleSquared > bandEnvelope)
+                        bandEnvelope = (sampleSquared + bandEnvelope * attackSamples) * attackCoeff;
+                    else
+                        bandEnvelope = (sampleSquared + bandEnvelope * releaseSamples) * releaseCoeff;
+
+                    const float gain = calculateBandGain(bandEnvelope, lowerThresholdDb, upperThresholdDb,
+                                                         lowerRatio, upperRatio);
+                    band[sample] = inputSample * gain * outputGain;
+                }
+            }
+        };
 
         juce::AudioBuffer<float> lowBuffer(totalNumInputChannels, buffer.getNumSamples());
         juce::AudioBuffer<float> midBuffer(totalNumInputChannels, buffer.getNumSamples());
@@ -277,7 +353,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             highBuffer.copyFrom(channel, 0, buffer.getReadPointer(channel), buffer.getNumSamples());
         }
 
-        // Split into three bands using Linkwitz-Riley crossovers:
         juce::dsp::AudioBlock<float> lowBlock(lowBuffer);
         juce::dsp::ProcessContextReplacing<float> lowContext(lowBlock);
         lowCrossoverWide.process(lowContext);
@@ -291,37 +366,34 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         juce::dsp::ProcessContextReplacing<float> highContext(highBlock);
         highCrossoverNarrow.process(highContext);
 
-        std::array<float, 2> lowEnv { 0.0f, 0.0f };
-        std::array<float, 2> midEnv { 0.0f, 0.0f };
-        std::array<float, 2> highEnv { 0.0f, 0.0f };
+        std::vector<float> lowEnvelope(totalNumInputChannels, 0.0f);
+        std::vector<float> midEnvelope(totalNumInputChannels, 0.0f);
+        std::vector<float> highEnvelope(totalNumInputChannels, 0.0f);
 
-        for (int channel = 0; channel < totalNumInputChannels; ++channel)
-        {
-            auto* low = lowBuffer.getWritePointer(channel);
-            auto* mid = midBuffer.getWritePointer(channel);
-            auto* high = highBuffer.getWritePointer(channel);
-            std::vector<float*> bands = {low, mid, high};;
-
-            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-            {
-                for (auto* band: bands) {
-                    float sampleSquared = band[sample] * band[sample];
-                    //Downward compression first:
-                    bool highIsAttack = sampleSquared > 0.0f;
-                }
-            }
-        }
+        processBand(lowBuffer, lowLowerThresholdDb, lowUpperThresholdDb, lowLowerRatio, lowUpperRatio,
+                    lowInputGain, lowOutputGain, attackMs * 0.85f, releaseMs * 1.2f, lowEnvelope);
+        processBand(midBuffer, midLowerThresholdDb, midUpperThresholdDb, midLowerRatio, midUpperRatio,
+                    midInputGain, midOutputGain, attackMs, releaseMs, midEnvelope);
+        processBand(highBuffer, highLowerThresholdDb, highUpperThresholdDb, highLowerRatio, highUpperRatio,
+                    highInputGain, highOutputGain, attackMs * 1.15f, releaseMs * 0.9f, highEnvelope);
 
         buffer.clear();
         for (int channel = 0; channel < totalNumInputChannels; ++channel)
         {
-            buffer.addFrom(channel, 0, lowBuffer, channel, 0, buffer.getNumSamples());
-            buffer.addFrom(channel, 0, midBuffer, channel, 0, buffer.getNumSamples());
-            buffer.addFrom(channel, 0, highBuffer, channel, 0, buffer.getNumSamples());
+            auto* output = buffer.getWritePointer(channel);
+            auto* low = lowBuffer.getWritePointer(channel);
+            auto* mid = midBuffer.getWritePointer(channel);
+            auto* high = highBuffer.getWritePointer(channel);
+
+            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+                output[sample] = low[sample] + mid[sample] + high[sample];
         }
 
         buffer.applyGain(masterGain);
     }
+
+    //Post Envelope Follower -------------------------------------------------------------------------------------------
+
     visualizerBuffer.makeCopyOf(buffer);//Make copy of buffer to pass into visualizer
 }
 
@@ -615,6 +687,34 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
         150.0f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
             return juce::String(value, 2) + " ms";
+        })),
+
+        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"envAttack"},
+        "envAttack", juce::NormalisableRange(0.0f, 200.0f),
+        15.0f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
+            return juce::String(value, 1) + " ms";
+        })),
+
+        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"envRelease"},
+        "envRelease", juce::NormalisableRange(0.0f, 200.0f),
+        15.0f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
+            return juce::String(value, 1) + " ms";
+        })),
+
+        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"gainMatchAttack"},
+        "gainMatchAttack", juce::NormalisableRange(0.0f, 200.0f),
+        15.0f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
+            return juce::String(value, 1) + " ms";
+        })),
+
+        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"releaseMatchRelease"},
+        "releaseMatchRelease", juce::NormalisableRange(0.0f, 200.0f),
+        15.0f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
+            return juce::String(value, 1) + " ms";
         })),
 
         std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"lowInputGain"},
