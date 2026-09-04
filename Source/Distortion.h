@@ -23,6 +23,7 @@ class Distortion {
 public:
     DistortionType getDistortionType() const;
     float getDrive() const;
+    float getMix() const;
     void setDrive(float drive_);
     void setThresh(float thresh_);
     void setMix(float mix_);

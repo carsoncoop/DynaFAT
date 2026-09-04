@@ -195,6 +195,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         for (int channel = 0; channel < totalNumInputChannels; ++channel){
             auto* input = buffer.getWritePointer(channel);
 
+            //Distortion
             if (distortion.getDistortionType() == Downsample) {
                 float hold = 0;
                 float counter = 0;
@@ -206,10 +207,17 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 if (counter >= static_cast<int>(juce::Decibels::gainToDecibels(distortion.getDrive()))) {
                     counter = 0;
                 }
+
+                float mix = distortion.getMix();
+                input[sample] = input[sample] * (1.0f - mix / 100) + (mix / 100) * input[sample];
             }
             else {
                 input[sample] = distortion.process(input[sample]);
             }
+            //*Compression goes here*
+
+            //*Calculate post-processing envelope*
+            //*Gain match goes here*
         }
     }
     /*if (filterOrder == Post) {
@@ -222,20 +230,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         filter.process(context);
     }*/
 
-    //Mix sample processing
-    for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-        //Assign parameters
-        const float output = smoothedOutput.getNextValue();
-        const float mix = smoothedMix.getNextValue();
-        for (int channel = 0; channel < totalNumInputChannels; ++channel) {
-            auto* dryInput = dryBuffer.getReadPointer(channel);
-            auto* wetInput = buffer.getWritePointer(channel);
-            wetInput[sample] = dryInput[sample] * (1.0f - mix / 100) + (mix / 100) * wetInput[sample];
-            wetInput[sample] *= output;
-        }
-    }
     //Compression Starts Here-------------------------------------------------------------------------------------------
-    smoothedLowLowerThresh.setCurrentAndTargetValue(state.getRawParameterValue("lowLowerThresh")->load());
+    /*smoothedLowLowerThresh.setCurrentAndTargetValue(state.getRawParameterValue("lowLowerThresh")->load());
     smoothedLowUpperThresh.setCurrentAndTargetValue(state.getRawParameterValue("lowUpperThresh")->load());
     smoothedMidLowerThresh.setCurrentAndTargetValue(state.getRawParameterValue("midLowerThresh")->load());
     smoothedMidUpperThresh.setCurrentAndTargetValue(state.getRawParameterValue("midUpperThresh")->load());
@@ -255,7 +251,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedMidLowerRatio.setCurrentAndTargetValue(state.getRawParameterValue("midLowerRatio")->load());
     smoothedMidUpperRatio.setCurrentAndTargetValue(state.getRawParameterValue("midUpperRatio")->load());
     smoothedHighLowerRatio.setCurrentAndTargetValue(state.getRawParameterValue("highLowerRatio")->load());
-    smoothedHighUpperRatio.setCurrentAndTargetValue(state.getRawParameterValue("highUpperRatio")->load());
+    smoothedHighUpperRatio.setCurrentAndTargetValue(state.getRawParameterValue("highUpperRatio")->load());*/
 
     if (compressorToggle == CompOn){
         const float lowLowerThresholdDb = smoothedLowLowerThresh.getNextValue();
