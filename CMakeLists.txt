@@ -1,8 +1,3 @@
-#To Do: Make Vital OTT instead?
-#Download Vital and test OTT sound.
-#Properly split the 3 bands in process block first.
-#Look at Vital compressor source code on GitHub for reference.
-#Known bugs: Compressor turns on when window is opened, clicking sound when compressor is on
 cmake_minimum_required(VERSION 3.24)
 
 # Change to your project name
@@ -27,9 +22,9 @@ include(${CPM_DOWNLOAD_LOCATION})
 
 # Bring in JUCE locally
 CPMAddPackage(
-    NAME juce
-    GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
-    GIT_TAG origin/master
+        NAME juce
+        GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+        GIT_TAG origin/master
 )
 
 # Make sure you include any new source files here
@@ -38,8 +33,8 @@ set(SourceFiles
         Source/PluginEditor.h
         Source/PluginProcessor.cpp
         Source/PluginProcessor.h
-        Source/Square.cpp
-        Source/Square.h
+        Source/EnvelopeFollower.h
+        Source/EnvelopeFollower.cpp
 )
 
 # Change these to your own preferences
@@ -67,7 +62,7 @@ target_sources(${PROJECT_NAME} PRIVATE ${SourceFiles})
 
 # These are some toggleable options from the JUCE CMake API
 target_compile_definitions(${PROJECT_NAME}
-    PUBLIC
+        PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
@@ -90,4 +85,3 @@ target_link_libraries(${PROJECT_NAME}
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
-

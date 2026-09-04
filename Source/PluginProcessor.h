@@ -2,6 +2,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
+#include "EnvelopeFollower.h"
 
 enum DistortionType {
     SoftClip,
@@ -38,7 +39,8 @@ public:
     DistortionType distortionAlg = SoftClip;
     FilterType filterType = Lowpass;
     FilterOrder filterOrder = Off;
-    CompressorToggle compressorToggle = CompOn;
+    CompressorToggle compressorToggle = CompOff;
+    EnvelopeToggle envelope_toggle = EnvOff;
     //==============================================================================
     AudioPluginAudioProcessor();
     ~AudioPluginAudioProcessor() override;
@@ -88,6 +90,10 @@ public:
 
     juce::SmoothedValue<float> smoothedAttack;
     juce::SmoothedValue<float> smoothedRelease;
+    juce::SmoothedValue<float> smoothedEnvAttack;
+    juce::SmoothedValue<float> smoothedEnvRelease;
+    juce::SmoothedValue<float> smoothedGainMatchAttack;
+    juce::SmoothedValue<float> smoothedGainMatchRelease;
     juce::SmoothedValue<float> smoothedCompMasterGain;
     
     // Per-band compressor smoothing values
@@ -118,6 +124,8 @@ private:
     juce::AudioProcessorValueTreeState state;
 
     juce::dsp::StateVariableTPTFilter<float> filter;
+
+    EnvelopeFollower envelopeFollower;
 
     //Band splitting (mids are created later)
     juce::dsp::LinkwitzRileyFilter<float> lowCrossoverWide;

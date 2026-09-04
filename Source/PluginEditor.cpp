@@ -35,7 +35,11 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     highOutputGainSliderAttachment(processorRef.getState(), "highOutputGain", highOutputGainSlider),
     compMasterGainSliderAttachment(processorRef.getState(), "compMasterGain", compMasterGainSlider),
     attackSliderAttachment(processorRef.getState(), "attack", attackSlider),
-    releaseSliderAttachment(processorRef.getState(), "release", releaseSlider)
+    releaseSliderAttachment(processorRef.getState(), "release", releaseSlider),
+    envAttackSliderAttachment(processorRef.getState(), "envAttack", envAttackSlider),
+    envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider),
+    gainMatchAttackSliderAttachment(processorRef.getState(), "gainMatchAttack", gainMatchAttackSlider),
+    releaseMatchReleaseSliderAttachment(processorRef.getState(), "releaseMatchRelease", releaseMatchReleaseSlider)
 {
     //Distortion Parameters---------------------------------------------------------------------------------------------
     filterButton.setButtonText("Lowpass");
@@ -145,7 +149,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     startTimerHz(60);
     addAndMakeVisible(visual);
 
-    addAndMakeVisible(firstObj);
 
     preLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(preLabel);
@@ -200,7 +203,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     //Compressor Parameters---------------------------------------------------------------------------------------------
     addAndMakeVisible(compressorButton);
 
-    compressorButton.setToggleState(true, juce::dontSendNotification);
+    compressorButton.setToggleState(false, juce::dontSendNotification);
 
     compressorButton.onClick = [this] {
         if (compressorButton.getToggleState()) {
@@ -363,6 +366,30 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addCompressorLabel(attackLabel); addAndMakeVisible(attackLabel);
     addCompressorLabel(releaseLabel); addAndMakeVisible(releaseLabel);
 
+    const auto addEnvKnob = [] (juce::Slider& slider, juce::Label& label) {
+        slider.setPopupDisplayEnabled(true, false, nullptr);
+        slider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
+        slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+        slider.setPopupMenuEnabled(true);
+        label.setJustificationType(juce::Justification::centred);
+        label.setFont(juce::Font (juce::FontOptions { 10.0f }));
+    };
+
+    addEnvKnob(envAttackSlider, envAttackLabel);
+    addAndMakeVisible(envAttackSlider);
+    addAndMakeVisible(envAttackLabel);
+
+    addEnvKnob(envReleaseSlider, envReleaseLabel);
+    addAndMakeVisible(envReleaseSlider);
+    addAndMakeVisible(envReleaseLabel);
+
+    addEnvKnob(gainMatchAttackSlider, gainMatchAttackLabel);
+    addAndMakeVisible(gainMatchAttackSlider);
+    addAndMakeVisible(gainMatchAttackLabel);
+
+    addEnvKnob(releaseMatchReleaseSlider, releaseMatchReleaseLabel);
+    addAndMakeVisible(releaseMatchReleaseSlider);
+    addAndMakeVisible(releaseMatchReleaseLabel);
 
     setSize (600, 700);
 }
@@ -476,5 +503,19 @@ void AudioPluginAudioProcessorEditor::resized()
     attackLabel.setBounds(attackSlider.getX(), attackSlider.getBottom() - 8, attackSlider.getWidth(), 18);
     releaseLabel.setBounds(releaseSlider.getX(), releaseSlider.getBottom() - 8, releaseSlider.getWidth(), 18);
     compMasterGainLabel.setBounds(compMasterGainSlider.getX(), compMasterGainSlider.getBottom() - 8, compMasterGainSlider.getWidth(), 18);
-}
 
+    const auto bottomKnobSize = 68;
+    const auto bottomY = getHeight() - 120;
+    const auto bottomXStart = 32;
+    const auto bottomGap = 130;
+
+    envAttackSlider.setBounds(bottomXStart, bottomY, bottomKnobSize, bottomKnobSize);
+    envReleaseSlider.setBounds(bottomXStart + bottomGap, bottomY, bottomKnobSize, bottomKnobSize);
+    gainMatchAttackSlider.setBounds(bottomXStart + bottomGap * 2, bottomY, bottomKnobSize, bottomKnobSize);
+    releaseMatchReleaseSlider.setBounds(bottomXStart + bottomGap * 3, bottomY, bottomKnobSize, bottomKnobSize);
+
+    envAttackLabel.setBounds(envAttackSlider.getX(), envAttackSlider.getBottom() - 8, envAttackSlider.getWidth(), 18);
+    envReleaseLabel.setBounds(envReleaseSlider.getX(), envReleaseSlider.getBottom() - 8, envReleaseSlider.getWidth(), 18);
+    gainMatchAttackLabel.setBounds(gainMatchAttackSlider.getX(), gainMatchAttackSlider.getBottom() - 8, gainMatchAttackSlider.getWidth(), 18);
+    releaseMatchReleaseLabel.setBounds(releaseMatchReleaseSlider.getX(), releaseMatchReleaseSlider.getBottom() - 8, releaseMatchReleaseSlider.getWidth(), 18);
+}

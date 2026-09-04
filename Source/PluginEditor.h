@@ -2,7 +2,7 @@
 
 #include <juce_audio_utils/gui/juce_AudioVisualiserComponent.h>
 #include "PluginProcessor.h"
-#include "Square.h"
+
 
 
 //==============================================================================
@@ -20,7 +20,6 @@ public:
     void timerCallback() override;
 
 private:
-    Square firstObj;
     AudioPluginAudioProcessor& processorRef;
 
     juce::Label distortionHeader{"distortionHeader", "DISTORTION"};
@@ -69,6 +68,9 @@ private:
     juce::Slider attackSlider, releaseSlider;
     juce::AudioProcessorValueTreeState::SliderAttachment attackSliderAttachment, releaseSliderAttachment;
 
+    juce::Slider envAttackSlider, envReleaseSlider, gainMatchAttackSlider, releaseMatchReleaseSlider;
+    juce::AudioProcessorValueTreeState::SliderAttachment envAttackSliderAttachment, envReleaseSliderAttachment, gainMatchAttackSliderAttachment, releaseMatchReleaseSliderAttachment;
+
     juce::Label lowLowerThreshLabel{"lowLowerThreshLabel", "Low Low T"};
     juce::Label lowUpperThreshLabel{"lowUpperThreshLabel", "Low High T"};
     juce::Label midLowerThreshLabel{"midLowerThreshLabel", "Mid Low T"};
@@ -90,5 +92,9 @@ private:
     juce::Label compMasterGainLabel{"compMasterGainLabel", "Master"};
     juce::Label attackLabel{"attackLabel", "Attack"};
     juce::Label releaseLabel{"releaseLabel", "Release"};
+    juce::Label envAttackLabel{"envAttackLabel", "Env Attack"};
+    juce::Label envReleaseLabel{"envReleaseLabel", "Env Release"};
+    juce::Label gainMatchAttackLabel{"gainMatchAttackLabel", "Gain Match Attack"};
+    juce::Label releaseMatchReleaseLabel{"releaseMatchReleaseLabel", "Release Match Release"};
 };
 
