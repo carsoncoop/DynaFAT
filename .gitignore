@@ -1,4 +1,5 @@
-/build/
-/build-x64/
-/cmake-build-default-visual-studio/
-/cmake-build-release/
+build/
+build-x64/
+cmake-build-default-visual-studio/
+cmake-build-release/
+.idea/
