@@ -31,6 +31,8 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
         smoothedGainMatchAttack.getCurrentValue(), smoothedGainMatchRelease.getCurrentValue());
 
     //Distortion Preparation--------------------------------------------------------------------------------------------
+    distortion.prepare(getSampleRate(), smoothedDrive.getCurrentValue(), smoothedThresh.getCurrentValue(), smoothedMix.getCurrentValue(), smoothedOutput.getCurrentValue());
+
     filter.prepare(spec);
     filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
     filter.setCutoffFrequency(20000.0f);
@@ -150,8 +152,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedThresh.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("thresh")->load()));
     smoothedOutput.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("output")->load()));
     smoothedMix.setTargetValue(state.getRawParameterValue("mix")->load());
-    smoothedCutoff.setTargetValue(state.getRawParameterValue("cutoff")->load());
-    smoothedReso.setTargetValue(state.getRawParameterValue("resonance")->load());
+    //smoothedCutoff.setTargetValue(state.getRawParameterValue("cutoff")->load());
+    //smoothedReso.setTargetValue(state.getRawParameterValue("resonance")->load());
 
     //Make copy of dry buffer for mix knob later
     juce::AudioBuffer<float> dryBuffer;
@@ -181,44 +183,32 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         filter.process(context);
     }*/
 
-    //Used for downsampling/sample & hold
-    float hold = 0;
-    float counter = 0;
-
-    //Sample processing
+    //Core sample processing
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-        //Assign parameters
-        const float drive = smoothedDrive.getNextValue();
-        const float thresh = smoothedThresh.getNextValue();
+        //Assign parameters to class variables
+        distortion.setDrive(smoothedDrive.getNextValue());
+        distortion.setThresh(smoothedThresh.getNextValue());
+        distortion.setMix(smoothedMix.getNextValue());
+        distortion.setOutput(smoothedOutput.getNextValue());
 
         //Channel processing
         for (int channel = 0; channel < totalNumInputChannels; ++channel){
-            auto* input = buffer.getWritePointer(channel); //essentially an array of floats (raw pointer technically)
+            auto* input = buffer.getWritePointer(channel);
 
-            //Input drive
-            if (distortionAlg != Downsample) {
-                input[sample] *= drive;
-            }
-
-            //Distortion
-            if (distortionAlg == SoftClip) {
-                input[sample] = thresh * std::tanh(input[sample] / thresh);
-            }
-            else if (distortionAlg == HardClip) {
-                input[sample] = juce::jlimit(-thresh,thresh, input[sample]);
-            }
-            else if (distortionAlg == Foldback) {
-                input[sample] = std::abs(std::abs(fmod((input[sample] - thresh), (4.0f * thresh))) - 2.0f * thresh) - thresh;
-            }
-            else if (distortionAlg == Downsample) {
+            if (distortion.getDistortionType() == Downsample) {
+                float hold = 0;
+                float counter = 0;
                 if (counter == 0) {
                     hold = input[sample];
                 }
                 input[sample] = hold;
                 counter += 0.5;
-                if (counter >= static_cast<int>(juce::Decibels::gainToDecibels(drive))) {
+                if (counter >= static_cast<int>(juce::Decibels::gainToDecibels(distortion.getDrive()))) {
                     counter = 0;
                 }
+            }
+            else {
+                input[sample] = distortion.process(input[sample]);
             }
         }
     }

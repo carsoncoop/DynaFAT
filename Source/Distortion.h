@@ -21,6 +21,8 @@ class Distortion {
     DistortionType distortionAlg = SoftClip;
 
 public:
+    DistortionType getDistortionType() const;
+    float getDrive() const;
     void setDrive(float drive_);
     void setThresh(float thresh_);
     void setMix(float mix_);

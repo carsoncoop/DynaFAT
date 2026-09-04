@@ -8,7 +8,7 @@ Requirements:
 
 Goals:
 - Implement EnvelopeFollower class
-- Implement multiband compression class
+- Implement multiband compression class 
   → Begin with a simple, one band, downward compressor without artifacts
   → Create upward compression
   → Split into 3 bands

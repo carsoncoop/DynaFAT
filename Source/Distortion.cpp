@@ -1,7 +1,15 @@
 #include "Distortion.h"
 
+DistortionType Distortion::getDistortionType() const {
+    return distortionAlg;
+}
+
 void Distortion::setDrive(const float drive_) {
     drive = drive_;
+}
+
+float Distortion::getDrive() const {
+    return drive;
 }
 
 void Distortion::setThresh(const float thresh_) {
@@ -30,17 +38,26 @@ void Distortion::prepare(const float sampleRate_, const float drive_, const floa
 }
 
 float Distortion::process(const float inputSample) const {
+    float wet = 0.0f;
     switch (distortionAlg) {
         case SoftClip:
-            return thresh * std::tanh(inputSample / thresh);
-            break;
+            wet = thresh * std::tanh((inputSample * drive) / thresh);
+            wet = inputSample * (1.0f - mix / 100) + (mix / 100) * wet;
+            wet *= output;
+            return 0.0f;
         case HardClip:
-            return juce::jlimit(-thresh,thresh, inputSample);
+            wet = juce::jlimit(-thresh,thresh, (inputSample * drive));
+            wet = inputSample * (1.0f - mix / 100) + (mix / 100) * wet;
+            wet *= output;
+            return 0.0f;
         case Foldback:
-            return std::abs(std::abs(fmod((inputSample - thresh), (4.0f * thresh))) - 2.0f * thresh) - thresh;
+            wet = std::abs(std::abs(fmod(((inputSample * drive) - thresh), (4.0f * thresh))) - 2.0f * thresh) - thresh;
+            wet = inputSample * (1.0f - mix / 100) + (mix / 100) * wet;
+            wet *= output;
+            return 0.0f;
         case Downsample:
             break;
-            //Downsample case must be handled in the process block because it requires mulitple samples
+            //Downsample case must be handled in the process block because it requires multiple samples
     }
     return 0.0f;
 }

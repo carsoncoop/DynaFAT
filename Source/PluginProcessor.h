@@ -3,13 +3,8 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 #include "EnvelopeFollower.h"
+#include "Distortion.h"
 
-enum DistortionType {
-    SoftClip,
-    HardClip,
-    Foldback,
-    Downsample
-};
 
 enum FilterOrder {
     Pre,
@@ -126,6 +121,7 @@ private:
     juce::dsp::StateVariableTPTFilter<float> filter;
 
     EnvelopeFollower envelopeFollower;
+    Distortion distortion;
 
     //Band splitting (mids are created later)
     juce::dsp::LinkwitzRileyFilter<float> lowCrossoverWide;
