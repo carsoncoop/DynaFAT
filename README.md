@@ -14,6 +14,7 @@ Goals:
 - Organize Distortion into it's own class
 - Reduce user controls to be concise while allowing for customizability
 - Optimize CPU performance in buffer processing
+- Minimize code required for parameter instantiation & loading
 
 Future Features:
 - Adjustable attack/release curve of envelope follower, allowing for a sharp J-curve
