@@ -26,12 +26,18 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     smoothedGainMatchAttack.setCurrentAndTargetValue(state.getRawParameterValue("gainMatchAttack")->load());
     smoothedGainMatchRelease.reset(sampleRate, 0.01f);
     smoothedGainMatchRelease.setCurrentAndTargetValue(state.getRawParameterValue("releaseMatchRelease")->load());
-    envelopeFollower.prepare(getSampleRate(),
+    preEnvelopeFollower.prepare(getSampleRate(), getTotalNumInputChannels(),
+        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue(),
+        smoothedGainMatchAttack.getCurrentValue(), smoothedGainMatchRelease.getCurrentValue());
+    postEnvelopeFollower.prepare(getSampleRate(), getTotalNumInputChannels(),
         smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue(),
         smoothedGainMatchAttack.getCurrentValue(), smoothedGainMatchRelease.getCurrentValue());
 
+
     //Distortion Preparation--------------------------------------------------------------------------------------------
-    distortion.prepare(getSampleRate(), smoothedDrive.getCurrentValue(), smoothedThresh.getCurrentValue(), smoothedMix.getCurrentValue(), smoothedOutput.getCurrentValue());
+    distortion.prepare(getSampleRate(),
+        smoothedDrive.getCurrentValue(), smoothedThresh.getCurrentValue(),
+        smoothedMix.getCurrentValue(), smoothedOutput.getCurrentValue());
 
     filter.prepare(spec);
     filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
@@ -130,21 +136,18 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedEnvRelease.setTargetValue(state.getRawParameterValue("envRelease")->load());
     smoothedGainMatchAttack.setTargetValue(state.getRawParameterValue("gainMatchAttack")->load());
     smoothedGainMatchRelease.setTargetValue(state.getRawParameterValue("releaseMatchRelease")->load());
-    envelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
-    envelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
-    envelopeFollower.setGainAttack(smoothedGainMatchAttack.getNextValue());
-    envelopeFollower.setGainRelease(smoothedGainMatchRelease.getNextValue());
+    preEnvelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
+    preEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
+    preEnvelopeFollower.setGainAttack(smoothedGainMatchAttack.getNextValue());
+    preEnvelopeFollower.setGainRelease(smoothedGainMatchRelease.getNextValue());
+    postEnvelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
+    postEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
+    postEnvelopeFollower.setGainAttack(smoothedGainMatchAttack.getNextValue());
+    postEnvelopeFollower.setGainRelease(smoothedGainMatchRelease.getNextValue());
 
-    std::array<float, 2> preEnv = {0.0f, 0.0f};
-    std::array<float, 2> postEnv = {0.0f, 0.0f};
+    //std::array<float, 2> preEnv = {0.0f, 0.0f};
+    //std::array<float, 2> postEnv = {0.0f, 0.0f};
 
-    for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
-        for (int channel = 0; channel < totalNumInputChannels; ++channel) {
-            //Compute input signal's envelope
-            auto* input = buffer.getReadPointer(channel);
-            preEnv[channel] = envelopeFollower.followEnv(input[sample]);
-        }
-    }
     //Distortion Starts Here--------------------------------------------------------------------------------------------
 
     //Takes linear gain value, and converts it to decibel representation
@@ -183,7 +186,15 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         filter.process(context);
     }*/
 
+    //Used for sample & hold
+    float hold = 0;
+    float counter = 0;
+
     //Core sample processing
+
+    // std::vector<float> preEnvelopes(totalNumInputChannels, 0.0f);
+    // std::vector<float> postEnvelopes(totalNumInputChannels, 0.0f);
+
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
         //Assign parameters to class variables
         distortion.setDrive(smoothedDrive.getNextValue());
@@ -194,11 +205,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         //Channel processing
         for (int channel = 0; channel < totalNumInputChannels; ++channel){
             auto* input = buffer.getWritePointer(channel);
-
+            float envPre = preEnvelopeFollower.followEnv(input[sample], channel);
             //Distortion
             if (distortion.getDistortionType() == Downsample) {
-                float hold = 0;
-                float counter = 0;
+                float dryInput = input[sample];
                 if (counter == 0) {
                     hold = input[sample];
                 }
@@ -209,7 +219,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 }
 
                 float mix = distortion.getMix();
-                input[sample] = input[sample] * (1.0f - mix / 100) + (mix / 100) * input[sample];
+                input[sample] = dryInput * (1.0f - mix / 100) + (mix / 100) * input[sample];
+                input[sample] *= distortion.getOutput();
             }
             else {
                 input[sample] = distortion.process(input[sample]);
@@ -217,7 +228,12 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             //*Compression goes here*
 
             //*Calculate post-processing envelope*
+            float envPost = postEnvelopeFollower.followEnv(input[sample], channel);
             //*Gain match goes here*
+            if (postEnvelopeFollower.getActivation() == true) {
+                input[sample] *= postEnvelopeFollower.computeCorrectionGain(preEnvelopeFollower.getEnvPerChannel()[channel], channel);
+            }
+
         }
     }
     /*if (filterOrder == Post) {
@@ -385,15 +401,14 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
 //==============================================================================
 AudioPluginAudioProcessor::AudioPluginAudioProcessor()
-     : AudioProcessor (BusesProperties()
-                     #if ! JucePlugin_IsMidiEffect
-                      #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
-                       ), state(*this, nullptr, "parameters", createParameters())
-{
+    : AudioProcessor(BusesProperties()
+#if ! JucePlugin_IsMidiEffect
+#if ! JucePlugin_IsSynth
+          .withInput("Input", juce::AudioChannelSet::stereo(), true)
+#endif
+          .withOutput("Output", juce::AudioChannelSet::stereo(), true)
+#endif
+      ), state(*this, nullptr, "parameters", createParameters()), distortion() {
 }
 
 AudioPluginAudioProcessor::~AudioPluginAudioProcessor()

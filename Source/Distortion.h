@@ -21,14 +21,18 @@ class Distortion {
     DistortionType distortionAlg = SoftClip;
 
 public:
-    DistortionType getDistortionType() const;
-    float getDrive() const;
-    float getMix() const;
+    Distortion();
+    Distortion(float sampleRate_, float drive_, float thresh_, float mix_, float output_);
+
+    [[nodiscard]] DistortionType getDistortionType() const;
+    [[nodiscard]] float getDrive() const;
+    [[nodiscard]] float getMix() const;
+    [[nodiscard]] float getOutput() const;
     void setDrive(float drive_);
     void setThresh(float thresh_);
     void setMix(float mix_);
     void setOutput(float output_);
     void setDistortionType(DistortionType type);
     void prepare(float sampleRate_, float drive_, float thresh_, float mix_, float output_);
-    float process(float inputSample) const;
+    [[nodiscard]] float process(float inputSample) const;
 };

@@ -1,5 +1,16 @@
 #include "Distortion.h"
 
+Distortion::Distortion(){}
+
+Distortion::Distortion(float sampleRate_, float drive_, float thresh_, float mix_, float output_) {
+    sampleRate = sampleRate_;
+    drive = drive_;
+    thresh = thresh_;
+    mix = mix_;
+    output = output_;
+}
+
+
 DistortionType Distortion::getDistortionType() const {
     return distortionAlg;
 }
@@ -8,12 +19,16 @@ float Distortion::getMix() const {
     return mix;
 }
 
-void Distortion::setDrive(const float drive_) {
-    drive = drive_;
+float Distortion::getOutput() const {
+    return output;
 }
 
 float Distortion::getDrive() const {
     return drive;
+}
+
+void Distortion::setDrive(const float drive_) {
+    drive = drive_;
 }
 
 void Distortion::setThresh(const float thresh_) {

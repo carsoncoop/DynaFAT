@@ -23,15 +23,15 @@ Future Features:
 Known bugs:
 - UI's compressor toggle automatically switches on after window opened
 
-Reminder for Developer:
-- PC VST Path: "F:/ProgramData/Ableton/Live 9 Standard"
-- Laptop VST Path: "C:/Users/tf2ma/Documents/Ableton/VST Plugins"
-
 Current To-Do List:
-- Implement Distortion Class & ensure it works the same as before when called in processBlock
 - Remove enumerated parameters in the PluginProcessor for OOP implementation
+- Fix Envelope Follower Attack/Release Issues
 
 Effect Class Layout:
 - Member variables store state of parameters through setter functions
 - Member functions process single samples of audio, only passing in the sample as a parameter
    → Access member variables for parameter values
+
+Reminder for Developer:
+- PC VST Path: "F:/ProgramData/Ableton/Live 9 Standard"
+- Laptop VST Path: "C:/Users/tf2ma/Documents/Ableton/VST Plugins"

@@ -23,19 +23,13 @@ enum CompressorToggle {
     CompOff
 };
 
-enum EnvelopeToggle {
-    EnvOn,
-    EnvOff
-};
 
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
 public:
-    DistortionType distortionAlg = SoftClip;
     FilterType filterType = Lowpass;
     FilterOrder filterOrder = Off;
     CompressorToggle compressorToggle = CompOff;
-    EnvelopeToggle envelope_toggle = EnvOff;
     //==============================================================================
     AudioPluginAudioProcessor();
     ~AudioPluginAudioProcessor() override;
@@ -111,6 +105,10 @@ public:
     juce::SmoothedValue<float> smoothedHighLowerRatio;
     juce::SmoothedValue<float> smoothedHighUpperRatio;
 
+    Distortion& getDistortion() {return distortion;}
+    EnvelopeFollower& getPreEnvelopeFollower() {return preEnvelopeFollower;}
+    EnvelopeFollower& getPostEnvelopeFollower() {return postEnvelopeFollower;}
+
 private:
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPluginAudioProcessor)
@@ -120,7 +118,7 @@ private:
 
     juce::dsp::StateVariableTPTFilter<float> filter;
 
-    EnvelopeFollower envelopeFollower;
+    EnvelopeFollower preEnvelopeFollower, postEnvelopeFollower;
     Distortion distortion;
 
     //Band splitting (mids are created later)
