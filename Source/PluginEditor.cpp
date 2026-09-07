@@ -84,25 +84,25 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                 }
                 else if (result == 1) {
                     algButton.setButtonText("Soft Clip");
-                    processorRef.distortionAlg = SoftClip;
+                    processorRef.getDistortion().setDistortionType(SoftClip);
                     threshLabel.setText("Thresh (+dB)", juce::dontSendNotification);
                     satLabel.setText("Drive (+dB)", juce::dontSendNotification);
                 }
                 else if (result == 2) {
                     algButton.setButtonText("Hard Clip");
-                    processorRef.distortionAlg = HardClip;
+                    processorRef.getDistortion().setDistortionType(HardClip);
                     threshLabel.setText("Thresh (+dB)", juce::dontSendNotification);
                     satLabel.setText("Drive (+dB)", juce::dontSendNotification);
                 }
                 else if (result == 3) {
                     algButton.setButtonText("Foldback");
-                    processorRef.distortionAlg = Foldback;
+                    processorRef.getDistortion().setDistortionType(Foldback);
                     threshLabel.setText("Thresh (+dB)", juce::dontSendNotification);
                     satLabel.setText("Drive (+dB)", juce::dontSendNotification);
                 }
                 else if (result == 4) {
                     algButton.setButtonText("Downsample");
-                    processorRef.distortionAlg = Downsample;
+                    processorRef.getDistortion().setDistortionType(Downsample);
                     threshLabel.setText("(NA)", juce::dontSendNotification);
                     satLabel.setText("Crush", juce::dontSendNotification);
                 }
@@ -211,6 +211,20 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         }
         else {
             processorRef.compressorToggle = CompOff;
+        }
+    };
+
+    // Envelope follower toggle (mirrors compressor toggle behavior)
+    addAndMakeVisible(envelopeButton);
+    envelopeButton.setToggleState(true, juce::dontSendNotification);
+    envelopeButton.onClick = [this] {
+        if (envelopeButton.getToggleState()) {
+            processorRef.getPreEnvelopeFollower().setActivation(true);
+            processorRef.getPostEnvelopeFollower().setActivation(true);
+        }
+        else {
+            processorRef.getPreEnvelopeFollower().setActivation(false);
+            processorRef.getPostEnvelopeFollower().setActivation(false);
         }
     };
 
@@ -445,6 +459,7 @@ void AudioPluginAudioProcessorEditor::resized()
     const auto colGap = 72;
 
     compressorButton.setBounds(rightPanelX + 100, rightPanelY, 110, 30);
+    envelopeButton.setBounds(getWidth() / 2, getHeight() - 50, 110, 30);
 
     const auto bandLayout = [&](juce::Slider& lowerT,
                                juce::Slider& upperT,

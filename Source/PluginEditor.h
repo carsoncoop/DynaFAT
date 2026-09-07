@@ -2,6 +2,8 @@
 
 #include <juce_audio_utils/gui/juce_AudioVisualiserComponent.h>
 #include "PluginProcessor.h"
+#include "Distortion.h"
+#include "EnvelopeFollower.h"
 
 
 
@@ -59,6 +61,7 @@ private:
     juce::Component ottPanel;
     juce::Label ottTitle{"ottTitle", "OTT"};
     juce::ToggleButton compressorButton;
+    juce::ToggleButton envelopeButton;
     juce::Slider lowLowerThreshSlider, lowUpperThreshSlider, midLowerThreshSlider, midUpperThreshSlider, highLowerThreshSlider, highUpperThreshSlider;
     juce::AudioProcessorValueTreeState::SliderAttachment lowLowerThreshSliderAttachment, lowUpperThreshSliderAttachment, midLowerThreshSliderAttachment, midUpperThreshSliderAttachment, highLowerThreshSliderAttachment, highUpperThreshSliderAttachment;
     juce::Slider lowLowerRatioSlider, lowUpperRatioSlider, midLowerRatioSlider, midUpperRatioSlider, highLowerRatioSlider, highUpperRatioSlider;
