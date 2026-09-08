@@ -9,7 +9,7 @@ class Compressor {
 
     float envAttackCoeff = 0.0f;
     float envReleaseCoeff = 0.0f;
-    std::vector<float> envPerChannel_dB;
+    std::vector<float> envPerChannel;
 
     float ratio = 1;
     float thresh_dB = 1;
@@ -20,7 +20,7 @@ class Compressor {
 public:
     void prepare(float sampleRate_, unsigned int numChannels_, float envAttackMs_, float envReleaseMs_, float ratio_, float thresh_dB_);
 
-    std::vector<float>& getEnvPerChannel() { return envPerChannel_dB; }
+    std::vector<float>& getEnvPerChannel() { return envPerChannel; }
 
     void setActivation(const bool status) {activated = status;}
     bool getActivation() const {return activated;}
