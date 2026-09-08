@@ -48,12 +48,18 @@ void Compressor::followEnv (const float inputSample, const int channelIndex) {
 }
 
 float Compressor::computeGainChange(const int channelIndex) const {
-    const float env_dB = juce::Decibels::gainToDecibels(envPerChannel[channelIndex]);
+    constexpr float eps = 1e-6f;
+    const float envLinear = std::max(envPerChannel[channelIndex], eps);
+    const float env_dB = juce::Decibels::gainToDecibels(envLinear);
 
-    //*Compressor gain math (in dB)*
+    float gainReduction_dB = 0.0f;
 
+    if (env_dB > thresh_dB) {
+        const float overshoot_dB = env_dB - thresh_dB;
+        gainReduction_dB = overshoot_dB * (1.0f - 1.0f / ratio);
+    }
 
-    //return linear gain
-    return 0.0f;
+    //Return linear gain
+    return juce::Decibels::decibelsToGain(-gainReduction_dB);
 }
 

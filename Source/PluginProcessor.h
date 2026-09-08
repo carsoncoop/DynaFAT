@@ -76,10 +76,16 @@ public:
     juce::SmoothedValue<float> smoothedEnvAttack;
     juce::SmoothedValue<float> smoothedEnvRelease;
 
+    //Compressor controls (loaded for use, not yet connected to DSP)
+    juce::SmoothedValue<float> smoothedCompThresh;
+    juce::SmoothedValue<float> smoothedCompRatio;
+    juce::SmoothedValue<float> smoothedCompAttack;
+    juce::SmoothedValue<float> smoothedCompRelease;
 
     Distortion& getDistortion() {return distortion;}
     EnvelopeFollower& getPreEnvelopeFollower() {return preEnvelopeFollower;}
     EnvelopeFollower& getPostEnvelopeFollower() {return postEnvelopeFollower;}
+    Compressor& getCompressor() {return compressor;}
 
 private:
     //==============================================================================
@@ -92,6 +98,7 @@ private:
 
     EnvelopeFollower preEnvelopeFollower, postEnvelopeFollower;
     Distortion distortion;
+    Compressor compressor;
 
     //Band splitting (mids are created later)
     juce::dsp::LinkwitzRileyFilter<float> lowCrossoverWide;

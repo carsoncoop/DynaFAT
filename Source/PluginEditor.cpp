@@ -15,6 +15,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     mixSliderAttachment(processorRef.getState(), "mix", mixSlider),
     cutoffSliderAttachment(processorRef.getState(), "cutoff", cutoffSlider),
     resoSliderAttachment(processorRef.getState(), "resonance", resoSlider),
+    compThreshSliderAttachment(processorRef.getState(), "compThresh", compThreshSlider),
+    compRatioSliderAttachment(processorRef.getState(), "compRatio", compRatioSlider),
+    compAttackSliderAttachment(processorRef.getState(), "compAttack", compAttackSlider),
+    compReleaseSliderAttachment(processorRef.getState(), "compRelease", compReleaseSlider),
     envAttackSliderAttachment(processorRef.getState(), "envAttack", envAttackSlider),
     envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider)
 {
@@ -181,17 +185,43 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     //Compressor Parameters---------------------------------------------------------------------------------------------
     addAndMakeVisible(compressorButton);
-
-    compressorButton.setToggleState(false, juce::dontSendNotification);
-
+    compressorButton.setToggleState(true, juce::dontSendNotification);
     compressorButton.onClick = [this] {
         if (compressorButton.getToggleState()) {
-
+            processorRef.getPreEnvelopeFollower().setActivation(true);
         }
         else {
-
+            processorRef.getPreEnvelopeFollower().setActivation(false);
         }
     };
+
+    compThreshLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(compThreshLabel);
+    compThreshSlider.setPopupDisplayEnabled(true, false, this);
+    compThreshSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    compThreshSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    addAndMakeVisible(compThreshSlider);
+
+    compRatioLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(compRatioLabel);
+    compRatioSlider.setPopupDisplayEnabled(true, false, this);
+    compRatioSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    compRatioSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    addAndMakeVisible(compRatioSlider);
+
+    compAttackLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(compAttackLabel);
+    compAttackSlider.setPopupDisplayEnabled(true, false, this);
+    compAttackSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    compAttackSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    addAndMakeVisible(compAttackSlider);
+
+    compReleaseLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(compReleaseLabel);
+    compReleaseSlider.setPopupDisplayEnabled(true, false, this);
+    compReleaseSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
+    compReleaseSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    addAndMakeVisible(compReleaseSlider);
 
     //Envelope Follower Parameters--------------------------------------------------------------------------------------
     addAndMakeVisible(envelopeButton);
@@ -270,7 +300,17 @@ void AudioPluginAudioProcessorEditor::resized()
     //postButton.setBounds(getWidth() / 2 + 20, 40 ,20, 20);
     //offButton.setBounds(getWidth() / 2 + 20, 60 ,20, 20);
     //Compressor Drawings-----------------------------------------------------------------------------------------------
+    compressorButton.setBounds(getWidth() / 5 * 4 - 10, getHeight() / 5 - 65, 60, 30);
 
+    compThreshSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 3 - 40, 90, 90);
+    compRatioSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 5 - 40, 90, 90);
+    compAttackSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 7 - 40, 90, 90);
+    compReleaseSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 9 - 40, 90, 90);
+
+    compThreshLabel.setBounds(compThreshSlider.getX(), compThreshSlider.getBottom() - 8, compThreshSlider.getWidth(), 18);
+    compRatioLabel.setBounds(compRatioSlider.getX(), compRatioSlider.getBottom() - 8, compRatioSlider.getWidth(), 18);
+    compAttackLabel.setBounds(compAttackSlider.getX(), compAttackSlider.getBottom() - 8, compAttackSlider.getWidth(), 18);
+    compReleaseLabel.setBounds(compReleaseSlider.getX(), compReleaseSlider.getBottom() - 8, compReleaseSlider.getWidth(), 18);
 
     //Envelope Follower Drawings----------------------------------------------------------------------------------------
 

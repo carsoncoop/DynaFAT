@@ -8,9 +8,9 @@ Requirements:
 
 Goals:
 - Implement multiband compression class 
-  → Begin with a simple, one band, downward compressor without artifacts
-  → Create upward compression
-  → Split into 3 bands
+  - Begin with a simple, one band, downward compressor without artifacts 
+  - Create upward compression 
+  - Split into 3 bands
 - Reduce user controls to be concise while allowing for customizability
 - Optimize CPU performance in buffer processing
 - Minimize code required for parameter instantiation & loading
@@ -21,6 +21,14 @@ Future Features:
 - Adjustable curve of envelope follower, allowing for a sharp J-curve (sharp vs. shallow fall off)
 - Mix knob for envelope follower labeled "Dynamics"
 - Allow user to save and load presets
+
+Future Knobs:
+- Envelope Follower:
+  - Mix/"Dynamix"
+- Compressor
+  - Input gain
+- Master
+  - Master gain
 
 Known bugs:
 - UI's buttons reset visually when closed, but not in the dsp
