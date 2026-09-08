@@ -7,25 +7,23 @@ Requirements:
 - JUCE framework
 
 Goals:
-- Implement EnvelopeFollower class
 - Implement multiband compression class 
   → Begin with a simple, one band, downward compressor without artifacts
   → Create upward compression
   → Split into 3 bands
-- Organize Distortion into its own class
 - Reduce user controls to be concise while allowing for customizability
 - Optimize CPU performance in buffer processing
 - Minimize code required for parameter instantiation & loading
+- Minimize code for UI updates
 
 Future Features:
 - Adjustable curve of envelope follower, allowing for a sharp J-curve (sharp vs. shallow fall off)
 
 Known bugs:
-- UI's compressor toggle automatically switches on after window opened
+- UI's buttons reset visually when closed, but not in the dsp
 
 Current To-Do List:
-- Remove enumerated parameters in the PluginProcessor for OOP implementation
-- Fix Envelope Follower Attack/Release Issues
+- Create a simple, one band, downward compressor.
 
 Effect Class Layout:
 - Member variables store state of parameters through setter functions
