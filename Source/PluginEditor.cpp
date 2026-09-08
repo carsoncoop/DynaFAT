@@ -16,9 +16,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     cutoffSliderAttachment(processorRef.getState(), "cutoff", cutoffSlider),
     resoSliderAttachment(processorRef.getState(), "resonance", resoSlider),
     envAttackSliderAttachment(processorRef.getState(), "envAttack", envAttackSlider),
-    envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider),
-    gainMatchAttackSliderAttachment(processorRef.getState(), "gainMatchAttack", gainMatchAttackSlider),
-    gainMatchReleaseSliderAttachment(processorRef.getState(), "gainMatchRelease", gainMatchReleaseSlider)
+    envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider)
 {
     //Distortion Parameters---------------------------------------------------------------------------------------------
     filterButton.setButtonText("Lowpass");
@@ -112,8 +110,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     };
     distortionHeader.setJustificationType(juce::Justification::centred);
     compressionHeader.setJustificationType(juce::Justification::centred);
+    envelopeHeader.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(distortionHeader);
     addAndMakeVisible(compressionHeader);
+    addAndMakeVisible(envelopeHeader);
 
     addAndMakeVisible(algButton);
     addAndMakeVisible(filterButton);
@@ -224,14 +224,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(envReleaseSlider);
     addAndMakeVisible(envReleaseLabel);
 
-    addEnvKnob(gainMatchAttackSlider, gainMatchAttackLabel);
-    addAndMakeVisible(gainMatchAttackSlider);
-    addAndMakeVisible(gainMatchAttackLabel);
-
-    addEnvKnob(gainMatchReleaseSlider, gainMatchReleaseLabel);
-    addAndMakeVisible(gainMatchReleaseSlider);
-    addAndMakeVisible(gainMatchReleaseLabel);
-
     setSize (600, 700);
 }
 
@@ -252,6 +244,7 @@ void AudioPluginAudioProcessorEditor::resized()
     visual.setBounds(getWidth() / 2 - 75,20, 150 ,150);
     distortionHeader.setBounds(getWidth() / 5 - 62,-40, 150 ,150);
     compressionHeader.setBounds(getWidth() / 5 * 4 - 75,-40, 150 ,150);
+    envelopeHeader.setBounds(getWidth() / 2 - 75, getHeight() / 5 * 3, 150, 150);
 
     //Distortion Drawings-----------------------------------------------------------------------------------------------
     satLabel.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 3 - 20, 50, 50);
@@ -283,13 +276,9 @@ void AudioPluginAudioProcessorEditor::resized()
 
     envelopeButton.setBounds(getWidth() / 2 - 15, getHeight() / 5 * 4 - 25, 30, 30);
 
-    envAttackSlider.setBounds(80, getHeight() / 5 * 4, 80, 80);
-    envReleaseSlider.setBounds(200, getHeight() / 5 * 4, 80, 80);
-    gainMatchAttackSlider.setBounds(320, getHeight() / 5 * 4, 80, 80);
-    gainMatchReleaseSlider.setBounds(440, getHeight() / 5 * 4, 80, 80);
+    envAttackSlider.setBounds(200, getHeight() / 5 * 4, 80, 80);
+    envReleaseSlider.setBounds(320, getHeight() / 5 * 4, 80, 80);
 
     envAttackLabel.setBounds(envAttackSlider.getX(), envAttackSlider.getBottom() - 8, envAttackSlider.getWidth(), 18);
     envReleaseLabel.setBounds(envReleaseSlider.getX(), envReleaseSlider.getBottom() - 8, envReleaseSlider.getWidth(), 18);
-    gainMatchAttackLabel.setBounds(gainMatchAttackSlider.getX(), gainMatchAttackSlider.getBottom() - 8, gainMatchAttackSlider.getWidth(), 18);
-    gainMatchReleaseLabel.setBounds(gainMatchReleaseSlider.getX(), gainMatchReleaseSlider.getBottom() - 8, gainMatchReleaseSlider.getWidth(), 18);
 }

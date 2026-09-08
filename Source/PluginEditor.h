@@ -4,6 +4,7 @@
 #include "PluginProcessor.h"
 #include "Distortion.h"
 #include "EnvelopeFollower.h"
+#include "Compressor.h"
 
 
 
@@ -26,6 +27,7 @@ private:
 
     juce::Label distortionHeader{"distortionHeader", "DISTORTION"};
     juce::Label compressionHeader{"compressionHeader", "COMPRESSION"};
+    juce::Label envelopeHeader{"envelopeHeader", "DYNAMICS"};
 
     //Distortion
     juce::Slider satSlider;
@@ -63,12 +65,10 @@ private:
     //Envelope Follower
     juce::ToggleButton envelopeButton;
 
-    juce::Slider envAttackSlider, envReleaseSlider, gainMatchAttackSlider, gainMatchReleaseSlider;
-    juce::AudioProcessorValueTreeState::SliderAttachment envAttackSliderAttachment, envReleaseSliderAttachment, gainMatchAttackSliderAttachment, gainMatchReleaseSliderAttachment;
+    juce::Slider envAttackSlider, envReleaseSlider;
+    juce::AudioProcessorValueTreeState::SliderAttachment envAttackSliderAttachment, envReleaseSliderAttachment;
 
-    juce::Label envAttackLabel{"envAttackLabel", "Env Attack"};
-    juce::Label envReleaseLabel{"envReleaseLabel", "Env Release"};
-    juce::Label gainMatchAttackLabel{"gainMatchAttackLabel", "Gain Match Attack"};
-    juce::Label gainMatchReleaseLabel{"gainMatchReleaseLabel", "Gain Match Release"};
+    juce::Label envAttackLabel{"envAttackLabel", "Attack"};
+    juce::Label envReleaseLabel{"envReleaseLabel", "Release"};
 };
 

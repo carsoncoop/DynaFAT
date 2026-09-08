@@ -20,16 +20,10 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     smoothedEnvAttack.setCurrentAndTargetValue(state.getRawParameterValue("envAttack")->load());
     smoothedEnvRelease.reset(sampleRate, 0.01f);
     smoothedEnvRelease.setCurrentAndTargetValue(state.getRawParameterValue("envRelease")->load());
-    smoothedGainMatchAttack.reset(sampleRate, 0.01f);
-    smoothedGainMatchAttack.setCurrentAndTargetValue(state.getRawParameterValue("gainMatchAttack")->load());
-    smoothedGainMatchRelease.reset(sampleRate, 0.01f);
-    smoothedGainMatchRelease.setCurrentAndTargetValue(state.getRawParameterValue("gainMatchRelease")->load());
     preEnvelopeFollower.prepare(getSampleRate(), getTotalNumInputChannels(),
-        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue(),
-        smoothedGainMatchAttack.getCurrentValue(), smoothedGainMatchRelease.getCurrentValue());
+        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue());
     postEnvelopeFollower.prepare(getSampleRate(), getTotalNumInputChannels(),
-        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue(),
-        smoothedGainMatchAttack.getCurrentValue(), smoothedGainMatchRelease.getCurrentValue());
+        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue());
 
 
     //Distortion Preparation--------------------------------------------------------------------------------------------
@@ -90,16 +84,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //Pre Envelope Follower---------------------------------------------------------------------------------------------
     smoothedEnvAttack.setTargetValue(state.getRawParameterValue("envAttack")->load());
     smoothedEnvRelease.setTargetValue(state.getRawParameterValue("envRelease")->load());
-    smoothedGainMatchAttack.setTargetValue(state.getRawParameterValue("gainMatchAttack")->load());
-    smoothedGainMatchRelease.setTargetValue(state.getRawParameterValue("gainMatchRelease")->load());
     preEnvelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
     preEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
-    preEnvelopeFollower.setGainAttack(smoothedGainMatchAttack.getNextValue());
-    preEnvelopeFollower.setGainRelease(smoothedGainMatchRelease.getNextValue());
     postEnvelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
     postEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
-    postEnvelopeFollower.setGainAttack(smoothedGainMatchAttack.getNextValue());
-    postEnvelopeFollower.setGainRelease(smoothedGainMatchRelease.getNextValue());
 
     //Distortion Starts Here--------------------------------------------------------------------------------------------
 
@@ -178,8 +166,12 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 input[sample] = distortion.process(input[sample]);
             }
             //*Compression goes here*
+                //Measure envelope (for correct channel)
+                //Apply gain correction
 
-            //*Calculate post-processing envelope*
+
+
+            //Post processing envelope
             postEnvelopeFollower.followEnv(input[sample], channel);
             //*Gain match goes here*
             if (postEnvelopeFollower.getActivation() == true) {
@@ -403,20 +395,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
 
         std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"envRelease"},
         "envRelease", juce::NormalisableRange(0.0f, 200.0f),
-        15.0f,
-        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-            return juce::String(value, 1) + " ms";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"gainMatchAttack"},
-        "gainMatchAttack", juce::NormalisableRange(0.0f, 200.0f),
-        15.0f,
-        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-            return juce::String(value, 1) + " ms";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"gainMatchRelease"},
-        "gainMatchRelease", juce::NormalisableRange(0.0f, 200.0f),
         15.0f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
             return juce::String(value, 1) + " ms";

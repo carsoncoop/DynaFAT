@@ -4,6 +4,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include "EnvelopeFollower.h"
 #include "Distortion.h"
+#include "Compressor.h"
 
 
 enum FilterOrder {
@@ -74,8 +75,6 @@ public:
     //Envelope Follower
     juce::SmoothedValue<float> smoothedEnvAttack;
     juce::SmoothedValue<float> smoothedEnvRelease;
-    juce::SmoothedValue<float> smoothedGainMatchAttack;
-    juce::SmoothedValue<float> smoothedGainMatchRelease;
 
 
     Distortion& getDistortion() {return distortion;}

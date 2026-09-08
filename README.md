@@ -19,12 +19,13 @@ Goals:
 
 Future Features:
 - Adjustable curve of envelope follower, allowing for a sharp J-curve (sharp vs. shallow fall off)
+- Mix knob for envelope follower labeled "Dynamics"
 
 Known bugs:
 - UI's buttons reset visually when closed, but not in the dsp
 
 Current To-Do List:
-- Create a simple, one band, downward compressor.
+- Compressor math
 
 Effect Class Layout:
 - Member variables store state of parameters through setter functions
