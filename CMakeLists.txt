@@ -37,6 +37,8 @@ set(SourceFiles
         Source/EnvelopeFollower.cpp
         Source/Distortion.h
         Source/Distortion.cpp
+        Source/Compressor.h
+        Source/Compressor.cpp
 )
 
 # Change these to your own preferences

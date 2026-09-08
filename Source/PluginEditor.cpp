@@ -276,6 +276,10 @@ void AudioPluginAudioProcessorEditor::resized()
     //preButton.setBounds(getWidth() / 2 + 20, 20 ,20, 20);
     //postButton.setBounds(getWidth() / 2 + 20, 40 ,20, 20);
     //offButton.setBounds(getWidth() / 2 + 20, 60 ,20, 20);
+    //Compressor Drawings-----------------------------------------------------------------------------------------------
+
+
+    //Envelope Follower Drawings----------------------------------------------------------------------------------------
 
     envelopeButton.setBounds(getWidth() / 2 - 15, getHeight() / 5 * 4 - 25, 30, 30);
 
@@ -288,5 +292,4 @@ void AudioPluginAudioProcessorEditor::resized()
     envReleaseLabel.setBounds(envReleaseSlider.getX(), envReleaseSlider.getBottom() - 8, envReleaseSlider.getWidth(), 18);
     gainMatchAttackLabel.setBounds(gainMatchAttackSlider.getX(), gainMatchAttackSlider.getBottom() - 8, gainMatchAttackSlider.getWidth(), 18);
     gainMatchReleaseLabel.setBounds(gainMatchReleaseSlider.getX(), gainMatchReleaseSlider.getBottom() - 8, gainMatchReleaseSlider.getWidth(), 18);
-    std::cout << getWidth() << std::endl;
 }

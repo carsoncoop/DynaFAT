@@ -100,6 +100,4 @@ private:
     juce::dsp::LinkwitzRileyFilter<float> lowCrossoverNarrow;
     juce::dsp::LinkwitzRileyFilter<float> highCrossoverNarrow;
 
-
-    //float computeCompressionGain(float x_dB, float threshDown, float ratioDown, float threshUp, float ratioUp);
 };

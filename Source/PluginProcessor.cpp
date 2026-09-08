@@ -5,9 +5,7 @@
 
 //==============================================================================
 
-// float AudioPluginAudioProcessor::computeCompressionGain(float x_dB, float threshDown, float ratioDown, float threshUp, float ratioUp) {
-//
-// }
+
 
 void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {

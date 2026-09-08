@@ -15,6 +15,7 @@ Goals:
 - Optimize CPU performance in buffer processing
 - Minimize code required for parameter instantiation & loading
 - Minimize code for UI updates
+- Uncomment filter implementation and turn it into a class like the other effects
 
 Future Features:
 - Adjustable curve of envelope follower, allowing for a sharp J-curve (sharp vs. shallow fall off)
