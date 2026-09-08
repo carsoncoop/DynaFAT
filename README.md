@@ -18,7 +18,7 @@ Goals:
 - Minimize code required for parameter instantiation & loading
 
 Future Features:
-- Adjustable attack/release curve of envelope follower, allowing for a sharp J-curve
+- Adjustable curve of envelope follower, allowing for a sharp J-curve (sharp vs. shallow fall off)
 
 Known bugs:
 - UI's compressor toggle automatically switches on after window opened

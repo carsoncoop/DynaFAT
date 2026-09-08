@@ -58,46 +58,17 @@ private:
 
 
     //Compression
-    juce::Component ottPanel;
-    juce::Label ottTitle{"ottTitle", "OTT"};
     juce::ToggleButton compressorButton;
+
+    //Envelope Follower
     juce::ToggleButton envelopeButton;
-    juce::Slider lowLowerThreshSlider, lowUpperThreshSlider, midLowerThreshSlider, midUpperThreshSlider, highLowerThreshSlider, highUpperThreshSlider;
-    juce::AudioProcessorValueTreeState::SliderAttachment lowLowerThreshSliderAttachment, lowUpperThreshSliderAttachment, midLowerThreshSliderAttachment, midUpperThreshSliderAttachment, highLowerThreshSliderAttachment, highUpperThreshSliderAttachment;
-    juce::Slider lowLowerRatioSlider, lowUpperRatioSlider, midLowerRatioSlider, midUpperRatioSlider, highLowerRatioSlider, highUpperRatioSlider;
-    juce::AudioProcessorValueTreeState::SliderAttachment lowLowerRatioSliderAttachment, lowUpperRatioSliderAttachment, midLowerRatioSliderAttachment, midUpperRatioSliderAttachment, highLowerRatioSliderAttachment, highUpperRatioSliderAttachment;
-    juce::Slider lowInputGainSlider, lowOutputGainSlider, midInputGainSlider, midOutputGainSlider, highInputGainSlider, highOutputGainSlider, compMasterGainSlider;
-    juce::AudioProcessorValueTreeState::SliderAttachment lowInputGainSliderAttachment, lowOutputGainSliderAttachment, midInputGainSliderAttachment, midOutputGainSliderAttachment, highInputGainSliderAttachment, highOutputGainSliderAttachment, compMasterGainSliderAttachment;
-    juce::Slider attackSlider, releaseSlider;
-    juce::AudioProcessorValueTreeState::SliderAttachment attackSliderAttachment, releaseSliderAttachment;
 
-    juce::Slider envAttackSlider, envReleaseSlider, gainMatchAttackSlider, releaseMatchReleaseSlider;
-    juce::AudioProcessorValueTreeState::SliderAttachment envAttackSliderAttachment, envReleaseSliderAttachment, gainMatchAttackSliderAttachment, releaseMatchReleaseSliderAttachment;
+    juce::Slider envAttackSlider, envReleaseSlider, gainMatchAttackSlider, gainMatchReleaseSlider;
+    juce::AudioProcessorValueTreeState::SliderAttachment envAttackSliderAttachment, envReleaseSliderAttachment, gainMatchAttackSliderAttachment, gainMatchReleaseSliderAttachment;
 
-    juce::Label lowLowerThreshLabel{"lowLowerThreshLabel", "Low Low T"};
-    juce::Label lowUpperThreshLabel{"lowUpperThreshLabel", "Low High T"};
-    juce::Label midLowerThreshLabel{"midLowerThreshLabel", "Mid Low T"};
-    juce::Label midUpperThreshLabel{"midUpperThreshLabel", "Mid High T"};
-    juce::Label highLowerThreshLabel{"highLowerThreshLabel", "High Low T"};
-    juce::Label highUpperThreshLabel{"highUpperThreshLabel", "High High T"};
-    juce::Label lowLowerRatioLabel{"lowLowerRatioLabel", "Low Low R"};
-    juce::Label lowUpperRatioLabel{"lowUpperRatioLabel", "Low High R"};
-    juce::Label midLowerRatioLabel{"midLowerRatioLabel", "Mid Low R"};
-    juce::Label midUpperRatioLabel{"midUpperRatioLabel", "Mid High R"};
-    juce::Label highLowerRatioLabel{"highLowerRatioLabel", "High Low R"};
-    juce::Label highUpperRatioLabel{"highUpperRatioLabel", "High High R"};
-    juce::Label lowInputGainLabel{"lowInputGainLabel", "Low Input"};
-    juce::Label lowOutputGainLabel{"lowOutputGainLabel", "Low Output"};
-    juce::Label midInputGainLabel{"midInputGainLabel", "Mid Input"};
-    juce::Label midOutputGainLabel{"midOutputGainLabel", "Mid Output"};
-    juce::Label highInputGainLabel{"highInputGainLabel", "High Input"};
-    juce::Label highOutputGainLabel{"highOutputGainLabel", "High Output"};
-    juce::Label compMasterGainLabel{"compMasterGainLabel", "Master"};
-    juce::Label attackLabel{"attackLabel", "Attack"};
-    juce::Label releaseLabel{"releaseLabel", "Release"};
     juce::Label envAttackLabel{"envAttackLabel", "Env Attack"};
     juce::Label envReleaseLabel{"envReleaseLabel", "Env Release"};
     juce::Label gainMatchAttackLabel{"gainMatchAttackLabel", "Gain Match Attack"};
-    juce::Label releaseMatchReleaseLabel{"releaseMatchReleaseLabel", "Release Match Release"};
+    juce::Label gainMatchReleaseLabel{"gainMatchReleaseLabel", "Gain Match Release"};
 };
 

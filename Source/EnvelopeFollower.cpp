@@ -10,11 +10,10 @@ void EnvelopeFollower::prepare(const float sampleRate_, const unsigned int numCh
     numChannels = numChannels_;
 
     //Creates a vector of envelopes per each channel
-    envPerChannel.assign(numChannels, 0.0f);
+    envPerChannel.assign(numChannels, 1e-6f);
 
     envAttackCoeff = 1.0f - std::exp(-1.0f / (envAttackMs_ * 0.001f * sampleRate));
     envReleaseCoeff = 1.0f - std::exp(-1.0f / (envReleaseMs_ * 0.001f * sampleRate));
-    envPerChannel = {0.0f, 0.0f};
 
     gainAttackCoeff = 1.0f - std::exp(-1.0f / (gainAttackMs_ * 0.001f * sampleRate));
     gainReleaseCoeff = 1.0f - std::exp(-1.0f / (gainReleaseMs_ * 0.001f * sampleRate));
@@ -67,6 +66,10 @@ float EnvelopeFollower::computeCorrectionGain(const float preSampleEnv, const in
 
     // Raw gain (linear) that would map post -> pre
     const float rawGainLinear = pre / post;
+
+    return rawGainLinear;
+    //This implementation seems to work great without the buggy smoothing below.
+    //It would be cool if I could find out how to compute gain correction AFTER this point to emulate the same perceived loudness of the post-processed signal, with the dynamics preserver on.
 
     // Work in dB for perceptual smoothing
     const float rawGainDb = juce::Decibels::gainToDecibels(rawGainLinear);

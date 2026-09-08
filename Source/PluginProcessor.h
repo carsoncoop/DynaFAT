@@ -18,18 +18,11 @@ enum FilterType {
     Bandpass,
 };
 
-enum CompressorToggle {
-    CompOn,
-    CompOff
-};
-
-
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
 public:
     FilterType filterType = Lowpass;
     FilterOrder filterOrder = Off;
-    CompressorToggle compressorToggle = CompOff;
     //==============================================================================
     AudioPluginAudioProcessor();
     ~AudioPluginAudioProcessor() override;
@@ -70,6 +63,7 @@ public:
 
     juce::AudioBuffer<float> visualizerBuffer;
 
+    //Distortion
     juce::SmoothedValue<float> smoothedDrive;
     juce::SmoothedValue<float> smoothedThresh;
     juce::SmoothedValue<float> smoothedOutput;
@@ -77,33 +71,12 @@ public:
     juce::SmoothedValue<float> smoothedCutoff;
     juce::SmoothedValue<float> smoothedReso;
 
-    juce::SmoothedValue<float> smoothedAttack;
-    juce::SmoothedValue<float> smoothedRelease;
+    //Envelope Follower
     juce::SmoothedValue<float> smoothedEnvAttack;
     juce::SmoothedValue<float> smoothedEnvRelease;
     juce::SmoothedValue<float> smoothedGainMatchAttack;
     juce::SmoothedValue<float> smoothedGainMatchRelease;
-    juce::SmoothedValue<float> smoothedCompMasterGain;
-    
-    // Per-band compressor smoothing values
-    juce::SmoothedValue<float> smoothedLowInputGain;
-    juce::SmoothedValue<float> smoothedLowOutputGain;
-    juce::SmoothedValue<float> smoothedLowLowerThresh;
-    juce::SmoothedValue<float> smoothedLowUpperThresh;
-    juce::SmoothedValue<float> smoothedLowLowerRatio;
-    juce::SmoothedValue<float> smoothedLowUpperRatio;
-    juce::SmoothedValue<float> smoothedMidInputGain;
-    juce::SmoothedValue<float> smoothedMidOutputGain;
-    juce::SmoothedValue<float> smoothedMidLowerThresh;
-    juce::SmoothedValue<float> smoothedMidUpperThresh;
-    juce::SmoothedValue<float> smoothedMidLowerRatio;
-    juce::SmoothedValue<float> smoothedMidUpperRatio;
-    juce::SmoothedValue<float> smoothedHighInputGain;
-    juce::SmoothedValue<float> smoothedHighOutputGain;
-    juce::SmoothedValue<float> smoothedHighLowerThresh;
-    juce::SmoothedValue<float> smoothedHighUpperThresh;
-    juce::SmoothedValue<float> smoothedHighLowerRatio;
-    juce::SmoothedValue<float> smoothedHighUpperRatio;
+
 
     Distortion& getDistortion() {return distortion;}
     EnvelopeFollower& getPreEnvelopeFollower() {return preEnvelopeFollower;}
