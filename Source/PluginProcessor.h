@@ -5,6 +5,7 @@
 #include "EnvelopeFollower.h"
 #include "Distortion.h"
 #include "Compressor.h"
+#include <vector>
 
 
 enum FilterOrder {
@@ -63,7 +64,6 @@ public:
     juce::AudioProcessorValueTreeState& getState() {return state;}
 
     juce::AudioBuffer<float> visualizerBuffer;
-
     //Distortion
     juce::SmoothedValue<float> smoothedDrive;
     juce::SmoothedValue<float> smoothedThresh;

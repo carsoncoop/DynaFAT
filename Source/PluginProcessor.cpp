@@ -16,6 +16,8 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
 
+
+
     //Envelop Follower Preparation--------------------------------------------------------------------------------------
     smoothedEnvAttack.reset(sampleRate, 0.01f);
     smoothedEnvRelease.reset(sampleRate, 0.01f);
