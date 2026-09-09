@@ -47,27 +47,7 @@ private:
     juce::AudioVisualiserComponent visual {1};
     juce::TextButton algButton;
 
-
-    //Filter
-    /*juce::TextButton filterTypeButton;
-    juce::ToggleButton preButton;
-    juce::ToggleButton postButton;
-    juce::ToggleButton offButton;
-
-    juce::AudioProcessorValueTreeState::SliderAttachment cutoffSliderAttachment;
-    juce::AudioProcessorValueTreeState::SliderAttachment resoSliderAttachment;
-
-    juce::Slider cutoffSlider;
-    juce::Slider resoSlider;
-
-    juce::Label cutoffLabel{"Cutoff Label", "Cutoff (Hz)"};
-    juce::Label resoLabel{"Resonance Label", "Res/Q"};
-    juce::Label preLabel{"Pre Label", "Pre"};
-    juce::Label postLabel{"Post Label", "Post"};
-    juce::Label offLabel{"Off Label", "Off"};*/
-
-
-    //Compression
+    //Compressor
     juce::ToggleButton compressorButton;
     juce::Slider compThreshSlider, compRatioSlider, compAttackSlider, compReleaseSlider;
     juce::AudioProcessorValueTreeState::SliderAttachment
@@ -88,5 +68,23 @@ private:
 
     juce::Label envAttackLabel{"envAttackLabel", "Attack"};
     juce::Label envReleaseLabel{"envReleaseLabel", "Release"};
+
+    //Filter
+    /*juce::TextButton filterTypeButton;
+    juce::ToggleButton preButton;
+    juce::ToggleButton postButton;
+    juce::ToggleButton offButton;
+
+    juce::AudioProcessorValueTreeState::SliderAttachment cutoffSliderAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment resoSliderAttachment;
+
+    juce::Slider cutoffSlider;
+    juce::Slider resoSlider;
+
+    juce::Label cutoffLabel{"Cutoff Label", "Cutoff (Hz)"};
+    juce::Label resoLabel{"Resonance Label", "Res/Q"};
+    juce::Label preLabel{"Pre Label", "Pre"};
+    juce::Label postLabel{"Post Label", "Post"};
+    juce::Label offLabel{"Off Label", "Off"};*/
 };
 

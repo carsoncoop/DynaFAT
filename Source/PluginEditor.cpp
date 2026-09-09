@@ -22,33 +22,41 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     envAttackSliderAttachment(processorRef.getState(), "envAttack", envAttackSlider),
     envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider)
 {
-    //Distortion Parameters---------------------------------------------------------------------------------------------
-    /*filterTypeButton.setButtonText("Lowpass");
-    filterTypeButton.onClick = [this]() {
-        juce::PopupMenu filterMenu;
-        filterMenu.addItem(1, "Lowpass");
-        filterMenu.addItem(2, "Highpass");
-        filterMenu.addItem(3, "Bandpass");
-        filterMenu.addItem(4, "OFF");
+    auto setupLabel = [this] (juce::Label& label, const juce::Font& font = juce::Font(), const juce::String& text = {}) {
+        label.setJustificationType(juce::Justification::centred);
+        if (font.getHeight() > 0.0f)
+            label.setFont(font);
+        if (text.isNotEmpty())
+            label.setText(text, juce::dontSendNotification);
+        addAndMakeVisible(label);
+    };
+    auto setupKnob = [this, &setupLabel] (juce::Slider& slider, juce::Label& label,
+                                         bool popupDisplay = true, bool menuEnabled = false,
+                                         juce::Component* popupOwner = nullptr,
+                                         const juce::Font& font = juce::Font(juce::FontOptions { 0.0f }))
+    {
+        juce::Component* owner = popupOwner ? popupOwner : this;
+        slider.setPopupDisplayEnabled(popupDisplay, false, owner);
+        slider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
+        slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+        slider.setPopupMenuEnabled(menuEnabled);
+        addAndMakeVisible(slider);
+        setupLabel(label, font);
 
-        filterMenu.showMenuAsync(juce::PopupMenu::Options(),
-            [this] (int result) {
-                if (result == 0) {//If no selection is made
-                }
-                else if (result == 1) {
-                    filterTypeButton.setButtonText("Lowpass");
-                    processorRef.getFilter().setFilterType(juce::dsp::StateVariableTPTFilterType::lowpass);
-                }
-                else if (result == 2) {
-                    filterTypeButton.setButtonText("Highpass");
-                    processorRef.getFilter().setFilterType(juce::dsp::StateVariableTPTFilterType::highpass);
-                }
-                else if (result == 3) {
-                    filterTypeButton.setButtonText("Bandpass");
-                    processorRef.getFilter().setFilterType(juce::dsp::StateVariableTPTFilterType::bandpass);
-                }
-        });
-    };*/
+    };
+    //Headers-----------------------------------------------------------------------------------------------------------
+    setupLabel(distortionHeader);
+    setupLabel(compressionHeader);
+    setupLabel(envelopeHeader);
+
+    visual.setBufferSize(64);
+    visual.setSamplesPerBlock(64);
+    visual.setRepaintRate(60);
+    visual.setColours(juce::Colours::black, juce::Colours::blueviolet);
+    startTimerHz(60);
+    addAndMakeVisible(visual);
+
+    //Distortion Parameters---------------------------------------------------------------------------------------------
 
     algButton.setButtonText("Soft Clip");
     algButton.onClick = [this]() {
@@ -89,8 +97,50 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                 }
         });
     };
+    addAndMakeVisible(algButton);
 
-    //Handles filterOrder buttons' exclusivity
+    setupKnob(satSlider, satLabel);
+    setupKnob(threshSlider, threshLabel);
+    setupKnob(outputSlider, outputLabel);
+    setupKnob(mixSlider, mixLabel, true, true);
+
+    //Compressor Parameters---------------------------------------------------------------------------------------------
+    compressorButton.setToggleState(true, juce::dontSendNotification);
+    compressorButton.onClick = [this] {
+        if (compressorButton.getToggleState()) {
+            processorRef.getPreEnvelopeFollower().setActivation(true);
+        }
+        else {
+            processorRef.getPreEnvelopeFollower().setActivation(false);
+        }
+    };
+    addAndMakeVisible(compressorButton);
+
+    setupKnob(compThreshSlider, compThreshLabel);
+    setupKnob(compRatioSlider, compRatioLabel);
+    setupKnob(compAttackSlider, compAttackLabel);
+    setupKnob(compReleaseSlider, compReleaseLabel);
+
+    //Envelope Follower Parameters--------------------------------------------------------------------------------------
+    addAndMakeVisible(envelopeButton);
+    envelopeButton.setToggleState(true, juce::dontSendNotification);
+    envelopeButton.onClick = [this] {
+        if (envelopeButton.getToggleState()) {
+            processorRef.getPreEnvelopeFollower().setActivation(true);
+            processorRef.getPostEnvelopeFollower().setActivation(true);
+        }
+        else {
+            processorRef.getPreEnvelopeFollower().setActivation(false);
+            processorRef.getPostEnvelopeFollower().setActivation(false);
+        }
+    };
+
+    setupKnob(envAttackSlider, envAttackLabel, true, true, nullptr, juce::Font (juce::FontOptions { 10.0f }));
+    setupKnob(envReleaseSlider, envReleaseLabel, true, true, nullptr, juce::Font (juce::FontOptions { 10.0f }));
+
+    setSize (600, 700);
+    //Filter stuff below------------------------------------------------------------------------------------------------
+
     /*offButton.setToggleState(false, juce::dontSendNotification);
     preButton.setRadioGroupId(1);
     postButton.setRadioGroupId(1);
@@ -112,26 +162,33 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             processorRef.getFilter().setActivation(false);
         }
     };*/
-    distortionHeader.setJustificationType(juce::Justification::centred);
-    compressionHeader.setJustificationType(juce::Justification::centred);
-    envelopeHeader.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(distortionHeader);
-    addAndMakeVisible(compressionHeader);
-    addAndMakeVisible(envelopeHeader);
 
-    addAndMakeVisible(algButton);
-    /*addAndMakeVisible(filterTypeButton);
-    addAndMakeVisible(preButton);
-    addAndMakeVisible(postButton);
-    addAndMakeVisible(offButton);*/
+    /*filterTypeButton.setButtonText("Lowpass");
+    filterTypeButton.onClick = [this]() {
+        juce::PopupMenu filterMenu;
+        filterMenu.addItem(1, "Lowpass");
+        filterMenu.addItem(2, "Highpass");
+        filterMenu.addItem(3, "Bandpass");
+        filterMenu.addItem(4, "OFF");
 
-    visual.setBufferSize(64);
-    visual.setSamplesPerBlock(64);
-    visual.setRepaintRate(60);
-    visual.setColours(juce::Colours::black, juce::Colours::blueviolet);
-    startTimerHz(60);
-    addAndMakeVisible(visual);
-
+        filterMenu.showMenuAsync(juce::PopupMenu::Options(),
+            [this] (int result) {
+                if (result == 0) {//If no selection is made
+                }
+                else if (result == 1) {
+                    filterTypeButton.setButtonText("Lowpass");
+                    processorRef.getFilter().setFilterType(juce::dsp::StateVariableTPTFilterType::lowpass);
+                }
+                else if (result == 2) {
+                    filterTypeButton.setButtonText("Highpass");
+                    processorRef.getFilter().setFilterType(juce::dsp::StateVariableTPTFilterType::highpass);
+                }
+                else if (result == 3) {
+                    filterTypeButton.setButtonText("Bandpass");
+                    processorRef.getFilter().setFilterType(juce::dsp::StateVariableTPTFilterType::bandpass);
+                }
+        });
+    };*/
 
     /*preLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(preLabel);
@@ -154,107 +211,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     resoSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     addAndMakeVisible(resoSlider);*/
 
-    satLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(satLabel);
-    satSlider.setPopupDisplayEnabled(true, false, this);
-    satSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    satSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    addAndMakeVisible(satSlider);
 
-    threshLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(threshLabel);
-    threshSlider.setPopupDisplayEnabled(true, false, this);
-    threshSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    threshSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    addAndMakeVisible(threshSlider);
-
-    outputLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(outputLabel);
-    outputSlider.setPopupDisplayEnabled(true, false, this);
-    outputSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    outputSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    addAndMakeVisible(outputSlider);
-
-    mixLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(mixLabel);
-    mixSlider.setPopupDisplayEnabled(true, false, this);
-    mixSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    mixSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    mixSlider.setPopupMenuEnabled(true);
-    addAndMakeVisible(mixSlider);
-
-    //Compressor Parameters---------------------------------------------------------------------------------------------
-    addAndMakeVisible(compressorButton);
-    compressorButton.setToggleState(true, juce::dontSendNotification);
-    compressorButton.onClick = [this] {
-        if (compressorButton.getToggleState()) {
-            processorRef.getPreEnvelopeFollower().setActivation(true);
-        }
-        else {
-            processorRef.getPreEnvelopeFollower().setActivation(false);
-        }
-    };
-
-    compThreshLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(compThreshLabel);
-    compThreshSlider.setPopupDisplayEnabled(true, false, this);
-    compThreshSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    compThreshSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    addAndMakeVisible(compThreshSlider);
-
-    compRatioLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(compRatioLabel);
-    compRatioSlider.setPopupDisplayEnabled(true, false, this);
-    compRatioSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    compRatioSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    addAndMakeVisible(compRatioSlider);
-
-    compAttackLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(compAttackLabel);
-    compAttackSlider.setPopupDisplayEnabled(true, false, this);
-    compAttackSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    compAttackSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    addAndMakeVisible(compAttackSlider);
-
-    compReleaseLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(compReleaseLabel);
-    compReleaseSlider.setPopupDisplayEnabled(true, false, this);
-    compReleaseSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    compReleaseSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    addAndMakeVisible(compReleaseSlider);
-
-    //Envelope Follower Parameters--------------------------------------------------------------------------------------
-    addAndMakeVisible(envelopeButton);
-    envelopeButton.setToggleState(true, juce::dontSendNotification);
-    envelopeButton.onClick = [this] {
-        if (envelopeButton.getToggleState()) {
-            processorRef.getPreEnvelopeFollower().setActivation(true);
-            processorRef.getPostEnvelopeFollower().setActivation(true);
-        }
-        else {
-            processorRef.getPreEnvelopeFollower().setActivation(false);
-            processorRef.getPostEnvelopeFollower().setActivation(false);
-        }
-    };
-
-    const auto addEnvKnob = [] (juce::Slider& slider, juce::Label& label) {
-        slider.setPopupDisplayEnabled(true, false, nullptr);
-        slider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
-        slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-        slider.setPopupMenuEnabled(true);
-        label.setJustificationType(juce::Justification::centred);
-        label.setFont(juce::Font (juce::FontOptions { 10.0f }));
-    };
-
-    addEnvKnob(envAttackSlider, envAttackLabel);
-    addAndMakeVisible(envAttackSlider);
-    addAndMakeVisible(envAttackLabel);
-
-    addEnvKnob(envReleaseSlider, envReleaseLabel);
-    addAndMakeVisible(envReleaseSlider);
-    addAndMakeVisible(envReleaseLabel);
-
-    setSize (600, 700);
 }
 
 AudioPluginAudioProcessorEditor::~AudioPluginAudioProcessorEditor()
@@ -291,20 +248,6 @@ void AudioPluginAudioProcessorEditor::resized()
 
     algButton.setBounds(getWidth() / 5 - 28, getHeight() / 5 - 80, 80, 30);
 
-
-    /*//Filter Drawings---------------------------------------------------------------------------------------------------
-    filterTypeButton.setBounds(getWidth() / 5 * 4 - 40, getHeight() / 5 - 70, 80, 30);
-    preButton.setBounds(getWidth() / 2 + 20, 20 ,20, 20);
-    postButton.setBounds(getWidth() / 2 + 20, 40 ,20, 20);
-    offButton.setBounds(getWidth() / 2 + 20, 60 ,20, 20);
-    cutoffLabel.setBounds(getWidth() / 5 * 4 - 25, getHeight() / 5 - 20, 50, 50);
-    resoLabel.setBounds(getWidth() / 5 * 4 - 25, getHeight() / 5 * 2 - 20, 50, 50);
-    preLabel.setBounds(getWidth() / 2 - 5, 20, 30, 20);
-    postLabel.setBounds(getWidth() / 2 - 5, 40, 30, 20);
-    offLabel.setBounds(getWidth() / 2 - 5, 60, 30, 20);
-    cutoffSlider.setBounds(getWidth() / 5 * 4 - 45, getHeight() / 5 - 40, 90, 90);
-    resoSlider.setBounds(getWidth() / 5 * 4 - 45, getHeight() / 5 * 2 - 40, 90, 90);*/
-
     //Compressor Drawings-----------------------------------------------------------------------------------------------
     compressorButton.setBounds(getWidth() / 5 * 4 - 10, getHeight() / 5 - 65, 60, 30);
 
@@ -327,4 +270,22 @@ void AudioPluginAudioProcessorEditor::resized()
 
     envAttackLabel.setBounds(envAttackSlider.getX(), envAttackSlider.getBottom() - 8, envAttackSlider.getWidth(), 18);
     envReleaseLabel.setBounds(envReleaseSlider.getX(), envReleaseSlider.getBottom() - 8, envReleaseSlider.getWidth(), 18);
+
+    /*//Filter Drawings---------------------------------------------------------------------------------------------------
+     filterTypeButton.setBounds(getWidth() / 5 * 4 - 40, getHeight() / 5 - 70, 80, 30);
+     preButton.setBounds(getWidth() / 2 + 20, 20 ,20, 20);
+     postButton.setBounds(getWidth() / 2 + 20, 40 ,20, 20);
+     offButton.setBounds(getWidth() / 2 + 20, 60 ,20, 20);
+     cutoffLabel.setBounds(getWidth() / 5 * 4 - 25, getHeight() / 5 - 20, 50, 50);
+     resoLabel.setBounds(getWidth() / 5 * 4 - 25, getHeight() / 5 * 2 - 20, 50, 50);
+     preLabel.setBounds(getWidth() / 2 - 5, 20, 30, 20);
+     postLabel.setBounds(getWidth() / 2 - 5, 40, 30, 20);
+     offLabel.setBounds(getWidth() / 2 - 5, 60, 30, 20);
+     cutoffSlider.setBounds(getWidth() / 5 * 4 - 45, getHeight() / 5 - 40, 90, 90);
+     resoSlider.setBounds(getWidth() / 5 * 4 - 45, getHeight() / 5 * 2 - 40, 90, 90);*/
+
+    /*addAndMakeVisible(filterTypeButton);
+    addAndMakeVisible(preButton);
+    addAndMakeVisible(postButton);
+    addAndMakeVisible(offButton);*/
 }
