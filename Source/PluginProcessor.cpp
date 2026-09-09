@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Parameters.h"
 #include <cmath>
 
 
@@ -142,12 +143,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //Used for sample & hold
     float hold = 0;
     float counter = 0;
-
-    //Core sample processing
-
-    // std::vector<float> preEnvelopes(totalNumInputChannels, 0.0f);
-    // std::vector<float> postEnvelopes(totalNumInputChannels, 0.0f);
-
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
         //Assign parameters to class variables
         distortion.setDrive(smoothedDrive.getNextValue());
@@ -209,7 +204,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         filter.process(context);
     }*/
 
-    visualizerBuffer.makeCopyOf(buffer);//Make copy of buffer to pass into visualizer
+    visualizerBuffer.makeCopyOf(buffer);
 }
 
 //==============================================================================
@@ -359,92 +354,35 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 
 juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameters() {
-    juce::NormalisableRange cutoffRange(20.0f, 20000.0f);
+    juce::NormalisableRange<float> cutoffRange(20.0f, 20000.0f);
     cutoffRange.setSkewForCentre(1000.0f);
 
-    return{
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"drive"},
-            "drive",juce::NormalisableRange(-36.0f, 36.0f),
-            0.0f,
-            juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-                return juce::String(value, 2) + " dB";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"thresh"},
-            "thresh", juce::NormalisableRange(-36.0f, 0.0f),
-            0.0f,
-            juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-                return juce::String(value, 2) + " dB";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"output"},
-            "output", juce::NormalisableRange(-36.0f, 36.0f),
-            0.0f,
-            juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-                return juce::String(value, 2) + " dB";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"mix"},
-        "mix", juce::NormalisableRange(0.0f, 100.0f),
-        100.0f,
-        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-            return juce::String(value, 2) + "%";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"cutoff"},
-        "cutoff", cutoffRange,
-        20000.0f,
-        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-        return juce::String(value, 2) + "Hz";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"resonance"},
-        "resonance", juce::NormalisableRange(0.01f, 6.0f),
-        0.7f,
-        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-            return juce::String(value, 2);
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"envAttack"},
-        "envAttack", juce::NormalisableRange(1.0f, 200.0f),
-        15.0f,
-        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-            return juce::String(value, 1) + " ms";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"envRelease"},
-        "envRelease", juce::NormalisableRange(1.0f, 200.0f),
-        15.0f,
-        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-            return juce::String(value, 1) + " ms";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"compThresh"},
-            "compThresh", juce::NormalisableRange(-36.0f, 0.0f),
-            -6.0f,
-            juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-                return juce::String(value, 2) + " dB";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"compRatio"},
-            "compRatio", juce::NormalisableRange(1.0f, 10.0f),
-            3.0f,
-            juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-                return juce::String(value, 2) + ":1";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"compAttack"},
-            "compAttack", juce::NormalisableRange(1.0f, 200.0f),
-            15.0f,
-            juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-                return juce::String(value, 1) + " ms";
-        })),
-
-        std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{"compRelease"},
-            "compRelease", juce::NormalisableRange(1.0f, 200.0f),
-            15.0f,
-            juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int){
-                return juce::String(value, 1) + " ms";
-        }))
+    std::vector<ParamSpec> specs{
+        ParamSpec("drive", "drive", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f,
+            [](float value,int){ return juce::String(value, 2) + " dB"; }),
+        ParamSpec("thresh", "thresh", juce::NormalisableRange<float>(-36.0f, 0.0f), 0.0f,
+            [](float value,int){ return juce::String(value, 2) + " dB"; }),
+        ParamSpec("output", "output", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f,
+            [](float value,int){ return juce::String(value, 2) + " dB"; }),
+        ParamSpec("mix", "mix", juce::NormalisableRange<float>(0.0f, 100.0f), 100.0f,
+            [](float value,int){ return juce::String(value, 2) + "%"; }),
+        ParamSpec("cutoff", "cutoff", cutoffRange, 20000.0f,
+            [](float value,int){ return juce::String(value, 2) + "Hz"; }),
+        ParamSpec("resonance", "resonance", juce::NormalisableRange<float>(0.01f, 6.0f), 0.7f,
+            [](float value,int){ return juce::String(value, 2); }),
+        ParamSpec("envAttack", "envAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f,
+            [](float value,int){ return juce::String(value, 1) + " ms"; }),
+        ParamSpec("envRelease", "envRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f,
+            [](float value,int){ return juce::String(value, 1) + " ms"; }),
+        ParamSpec("compThresh", "compThresh", juce::NormalisableRange<float>(-36.0f, 0.0f), -6.0f,
+            [](float value,int){ return juce::String(value, 2) + " dB"; }),
+        ParamSpec("compRatio", "compRatio", juce::NormalisableRange<float>(1.0f, 10.0f), 3.0f,
+            [](float value,int){ return juce::String(value, 2) + ":1"; }),
+        ParamSpec("compAttack", "compAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f,
+            [](float value,int){ return juce::String(value, 1) + " ms"; }),
+        ParamSpec("compRelease", "compRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f,
+            [](float value,int){ return juce::String(value, 1) + " ms"; })
     };
+
+    return createParametersFromSpecs(specs);
 }
