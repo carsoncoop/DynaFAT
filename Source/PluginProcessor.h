@@ -5,26 +5,13 @@
 #include "EnvelopeFollower.h"
 #include "Distortion.h"
 #include "Compressor.h"
+#include "Filter.h"
 #include <vector>
 
-
-enum FilterOrder {
-    Pre,
-    Post,
-    Off
-};
-
-enum FilterType {
-    Lowpass,
-    Highpass,
-    Bandpass,
-};
 
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
 public:
-    FilterType filterType = Lowpass;
-    FilterOrder filterOrder = Off;
     //==============================================================================
     AudioPluginAudioProcessor();
     ~AudioPluginAudioProcessor() override;
@@ -69,6 +56,8 @@ public:
     juce::SmoothedValue<float> smoothedThresh;
     juce::SmoothedValue<float> smoothedOutput;
     juce::SmoothedValue<float> smoothedMix;
+
+    //Filter
     juce::SmoothedValue<float> smoothedCutoff;
     juce::SmoothedValue<float> smoothedReso;
 
@@ -86,6 +75,7 @@ public:
     EnvelopeFollower& getPreEnvelopeFollower() {return preEnvelopeFollower;}
     EnvelopeFollower& getPostEnvelopeFollower() {return postEnvelopeFollower;}
     Compressor& getCompressor() {return compressor;}
+    Filter& getFilter() {return filter;}
 
 private:
     //==============================================================================
@@ -94,11 +84,10 @@ private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
     juce::AudioProcessorValueTreeState state;
 
-    juce::dsp::StateVariableTPTFilter<float> filter;
-
     EnvelopeFollower preEnvelopeFollower, postEnvelopeFollower;
     Distortion distortion;
     Compressor compressor;
+    Filter filter;
 
     //Band splitting (mids are created later)
     juce::dsp::LinkwitzRileyFilter<float> lowCrossoverWide;

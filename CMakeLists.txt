@@ -39,6 +39,8 @@ set(SourceFiles
         Source/Distortion.cpp
         Source/Compressor.h
         Source/Compressor.cpp
+        Source/Filter.h
+        Source/Filter.cpp
 )
 
 # Change these to your own preferences

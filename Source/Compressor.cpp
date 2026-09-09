@@ -7,9 +7,8 @@ void Compressor::prepare(const float sampleRate_, const unsigned int numChannels
     const float ratio_, const float thresh_dB_) {
 
     sampleRate = sampleRate_;
-    numChannels = numChannels_;
+    numChannels = std::max(2u, numChannels_);
 
-    //Creates a vector of envelopes per each channel
     envPerChannel.assign(numChannels, 1e-6f);
 
     envAttackCoeff = 1.0f - std::exp(-1.0f / (envAttackMs_ * 0.001f * sampleRate));
@@ -36,6 +35,7 @@ void Compressor::setThresh(const float thresh_dB_) {
 }
 
 void Compressor::followEnv (const float inputSample, const int channelIndex) {
+
     const float rectified = std::abs(inputSample);
     float env = envPerChannel[channelIndex];
     if (rectified > env) {
@@ -48,6 +48,7 @@ void Compressor::followEnv (const float inputSample, const int channelIndex) {
 }
 
 float Compressor::computeGainChange(const int channelIndex) const {
+
     constexpr float eps = 1e-6f;
     const float envLinear = std::max(envPerChannel[channelIndex], eps);
     const float env_dB = juce::Decibels::gainToDecibels(envLinear);

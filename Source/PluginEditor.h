@@ -34,29 +34,37 @@ private:
     juce::Slider threshSlider;
     juce::Slider outputSlider;
     juce::Slider mixSlider;
-    juce::Slider cutoffSlider;
-    juce::Slider resoSlider;
+
     juce::Label satLabel{"Drive Label", "Drive (+dB)"};
     juce::Label threshLabel{"Thresh Label", "Thresh (+dB)"};
     juce::Label outputLabel{"Output Label", "Output (+dB)"};
     juce::Label mixLabel{"Mix Label", "Mix (%)"};
-    juce::Label cutoffLabel{"Cutoff Label", "Cutoff (Hz)"};
-    juce::Label resoLabel{"Resonance Label", "Res/Q"};
-    juce::Label preLabel{"Pre Label", "Pre"};
-    juce::Label postLabel{"Post Label", "Post"};
-    juce::Label offLabel{"Off Label", "Off"};
     juce::AudioProcessorValueTreeState::SliderAttachment satSliderAttachment;
     juce::AudioProcessorValueTreeState::SliderAttachment threshSliderAttachment;
     juce::AudioProcessorValueTreeState::SliderAttachment outputSliderAttachment;
     juce::AudioProcessorValueTreeState::SliderAttachment mixSliderAttachment;
-    juce::AudioProcessorValueTreeState::SliderAttachment cutoffSliderAttachment;
-    juce::AudioProcessorValueTreeState::SliderAttachment resoSliderAttachment;
+
     juce::AudioVisualiserComponent visual {1};
     juce::TextButton algButton;
-    juce::TextButton filterButton;
+
+
+    //Filter
+    /*juce::TextButton filterTypeButton;
     juce::ToggleButton preButton;
     juce::ToggleButton postButton;
     juce::ToggleButton offButton;
+
+    juce::AudioProcessorValueTreeState::SliderAttachment cutoffSliderAttachment;
+    juce::AudioProcessorValueTreeState::SliderAttachment resoSliderAttachment;
+
+    juce::Slider cutoffSlider;
+    juce::Slider resoSlider;
+
+    juce::Label cutoffLabel{"Cutoff Label", "Cutoff (Hz)"};
+    juce::Label resoLabel{"Resonance Label", "Res/Q"};
+    juce::Label preLabel{"Pre Label", "Pre"};
+    juce::Label postLabel{"Post Label", "Post"};
+    juce::Label offLabel{"Off Label", "Off"};*/
 
 
     //Compression

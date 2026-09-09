@@ -13,8 +13,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     threshSliderAttachment(processorRef.getState(), "thresh", threshSlider),
     outputSliderAttachment(processorRef.getState(), "output", outputSlider),
     mixSliderAttachment(processorRef.getState(), "mix", mixSlider),
-    cutoffSliderAttachment(processorRef.getState(), "cutoff", cutoffSlider),
-    resoSliderAttachment(processorRef.getState(), "resonance", resoSlider),
+    /*cutoffSliderAttachment(processorRef.getState(), "cutoff", cutoffSlider),
+    resoSliderAttachment(processorRef.getState(), "resonance", resoSlider),*/
     compThreshSliderAttachment(processorRef.getState(), "compThresh", compThreshSlider),
     compRatioSliderAttachment(processorRef.getState(), "compRatio", compRatioSlider),
     compAttackSliderAttachment(processorRef.getState(), "compAttack", compAttackSlider),
@@ -23,8 +23,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider)
 {
     //Distortion Parameters---------------------------------------------------------------------------------------------
-    filterButton.setButtonText("Lowpass");
-    filterButton.onClick = [this]() {
+    /*filterTypeButton.setButtonText("Lowpass");
+    filterTypeButton.onClick = [this]() {
         juce::PopupMenu filterMenu;
         filterMenu.addItem(1, "Lowpass");
         filterMenu.addItem(2, "Highpass");
@@ -36,19 +36,19 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                 if (result == 0) {//If no selection is made
                 }
                 else if (result == 1) {
-                    filterButton.setButtonText("Lowpass");
-                    processorRef.filterType = Lowpass;
+                    filterTypeButton.setButtonText("Lowpass");
+                    processorRef.getFilter().setFilterType(juce::dsp::StateVariableTPTFilterType::lowpass);
                 }
                 else if (result == 2) {
-                    filterButton.setButtonText("Highpass");
-                    processorRef.filterType = Highpass;
+                    filterTypeButton.setButtonText("Highpass");
+                    processorRef.getFilter().setFilterType(juce::dsp::StateVariableTPTFilterType::highpass);
                 }
                 else if (result == 3) {
-                    filterButton.setButtonText("Bandpass");
-                    processorRef.filterType = Bandpass;
+                    filterTypeButton.setButtonText("Bandpass");
+                    processorRef.getFilter().setFilterType(juce::dsp::StateVariableTPTFilterType::bandpass);
                 }
         });
-    };
+    };*/
 
     algButton.setButtonText("Soft Clip");
     algButton.onClick = [this]() {
@@ -91,27 +91,27 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     };
 
     //Handles filterOrder buttons' exclusivity
-    offButton.setToggleState(true, juce::dontSendNotification);
+    /*offButton.setToggleState(false, juce::dontSendNotification);
     preButton.setRadioGroupId(1);
     postButton.setRadioGroupId(1);
-    offButton.setRadioGroupId(1);
+    offButton.setRadioGroupId(1);*/
 
-    preButton.onClick = [this] {
+    /*preButton.onClick = [this] {
         if (preButton.getToggleState()) {
-            processorRef.filterOrder = Pre;
+            processorRef.getFilter().setFilterOrder(Pre);
         }
     };
 
     postButton.onClick = [this] {
         if (postButton.getToggleState()) {
-            processorRef.filterOrder = Post;
+            processorRef.getFilter().setFilterOrder(Post);
         }
     };
     offButton.onClick = [this] {
         if (offButton.getToggleState()) {
-            processorRef.filterOrder = Off;
+            processorRef.getFilter().setActivation(false);
         }
-    };
+    };*/
     distortionHeader.setJustificationType(juce::Justification::centred);
     compressionHeader.setJustificationType(juce::Justification::centred);
     envelopeHeader.setJustificationType(juce::Justification::centred);
@@ -120,10 +120,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(envelopeHeader);
 
     addAndMakeVisible(algButton);
-    addAndMakeVisible(filterButton);
+    /*addAndMakeVisible(filterTypeButton);
     addAndMakeVisible(preButton);
     addAndMakeVisible(postButton);
-    addAndMakeVisible(offButton);
+    addAndMakeVisible(offButton);*/
 
     visual.setBufferSize(64);
     visual.setSamplesPerBlock(64);
@@ -133,7 +133,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(visual);
 
 
-    preLabel.setJustificationType(juce::Justification::centred);
+    /*preLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(preLabel);
     postLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(postLabel);
@@ -152,7 +152,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     resoSlider.setPopupDisplayEnabled(true, false, this);
     resoSlider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
     resoSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-    addAndMakeVisible(resoSlider);
+    addAndMakeVisible(resoSlider);*/
 
     satLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(satLabel);
@@ -281,24 +281,30 @@ void AudioPluginAudioProcessorEditor::resized()
     threshLabel.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 5 - 20, 50, 50);
     outputLabel.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 7 - 20, 50, 50);
     mixLabel.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 9 - 20, 50, 50);
-    //cutoffLabel.setBounds(getWidth() / 5 * 4 - 25, getHeight() / 5 - 20, 50, 50);
-    //resoLabel.setBounds(getWidth() / 5 * 4 - 25, getHeight() / 5 * 2 - 20, 50, 50);
-    //preLabel.setBounds(getWidth() / 2 - 5, 20, 30, 20);
-    //postLabel.setBounds(getWidth() / 2 - 5, 40, 30, 20);
-    //offLabel.setBounds(getWidth() / 2 - 5, 60, 30, 20);
+
 
     satSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 3 - 40, 90, 90);
     threshSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 5 - 40, 90, 90);
     outputSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 7 - 40, 90, 90);
     mixSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 9 - 40, 90, 90);
-    //cutoffSlider.setBounds(getWidth() / 5 * 4 - 45, getHeight() / 5 - 40, 90, 90);
-    //resoSlider.setBounds(getWidth() / 5 * 4 - 45, getHeight() / 5 * 2 - 40, 90, 90);
+
 
     algButton.setBounds(getWidth() / 5 - 28, getHeight() / 5 - 80, 80, 30);
-    //filterButton.setBounds(getWidth() / 5 * 4 - 40, getHeight() / 5 - 70, 80, 30);
-    //preButton.setBounds(getWidth() / 2 + 20, 20 ,20, 20);
-    //postButton.setBounds(getWidth() / 2 + 20, 40 ,20, 20);
-    //offButton.setBounds(getWidth() / 2 + 20, 60 ,20, 20);
+
+
+    /*//Filter Drawings---------------------------------------------------------------------------------------------------
+    filterTypeButton.setBounds(getWidth() / 5 * 4 - 40, getHeight() / 5 - 70, 80, 30);
+    preButton.setBounds(getWidth() / 2 + 20, 20 ,20, 20);
+    postButton.setBounds(getWidth() / 2 + 20, 40 ,20, 20);
+    offButton.setBounds(getWidth() / 2 + 20, 60 ,20, 20);
+    cutoffLabel.setBounds(getWidth() / 5 * 4 - 25, getHeight() / 5 - 20, 50, 50);
+    resoLabel.setBounds(getWidth() / 5 * 4 - 25, getHeight() / 5 * 2 - 20, 50, 50);
+    preLabel.setBounds(getWidth() / 2 - 5, 20, 30, 20);
+    postLabel.setBounds(getWidth() / 2 - 5, 40, 30, 20);
+    offLabel.setBounds(getWidth() / 2 - 5, 60, 30, 20);
+    cutoffSlider.setBounds(getWidth() / 5 * 4 - 45, getHeight() / 5 - 40, 90, 90);
+    resoSlider.setBounds(getWidth() / 5 * 4 - 45, getHeight() / 5 * 2 - 40, 90, 90);*/
+
     //Compressor Drawings-----------------------------------------------------------------------------------------------
     compressorButton.setBounds(getWidth() / 5 * 4 - 10, getHeight() / 5 - 65, 60, 30);
 

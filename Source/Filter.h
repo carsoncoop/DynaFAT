@@ -1,39 +1,52 @@
 #pragma once
 #include <juce_dsp/juce_dsp.h>
 
-enum FilterType {
-    Lowpass,
-    Highpass,
-    Bandpass,
-};
-
 enum FilterOrder {
     Pre,
     Post
 };
 
 class Filter {
-    FilterType filterType = Lowpass;
+    juce::dsp::StateVariableTPTFilter<float> filter;
+
     FilterOrder filterOrder = Pre;
-
-    float cutoff = 0.0f;
-    float resonance = 0.0f;
-
-    bool activated = false;
+    bool activated = true;
 
 public:
-    void prepare(float sampleRate_, float cutoff_, float resonance_);
+    void prepare();
+
+    [[nodiscard]] juce::dsp::StateVariableTPTFilter<float> getFilter() const {return filter;}
 
     void setActivation(const bool status) {activated = status;}
-    bool getActivation() const {return activated;}
+    [[nodiscard]] bool getActivation() const {return activated;}
 
-    //attack/release for envelope measurements
-    void setEnvAttack(float envAttackMs_);
-    void setEnvRelease(float envReleaseMs_);
+    void setCutoff(const float cutoff_) {
+        filter.setCutoffFrequency(cutoff_);
+    }
 
-    void followEnv (float inputSample, int channelIndex);
+    [[nodiscard]] float getCutoff() const {
+        return filter.getCutoffFrequency();
+    }
 
-    // Compute the correction gain (returns linear multiplier)
-    [[nodiscard]] float computeCorrectionGain (float preSampleEnv, int channelIndex) const;
+    void setResonance(const float resonance_) {
+        filter.setResonance(resonance_);
+    }
+    [[nodiscard]] float getResonance() const {
+        return filter.getResonance();
+    }
+
+    void setFilterType(juce::dsp::StateVariableTPTFilterType filterType_) {
+        filter.setType(filterType_);
+    }
+
+    [[nodiscard]] juce::dsp::StateVariableTPTFilterType getFilterType() const {
+        return filter.getType();
+    }
+
+    void setFilterOrder(const FilterOrder filterOrder_) {filterOrder = filterOrder_;}
+    [[nodiscard]] FilterOrder getFilterOrder() const {return filterOrder;}
+
+    void myProcess(const juce::dsp::AudioBlock<float>& inputBlock);
+
 };
-};
+

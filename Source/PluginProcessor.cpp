@@ -1,6 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "Parameters.h"
+
 #include <cmath>
 
 
@@ -23,13 +23,15 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     smoothedEnvRelease.reset(sampleRate, 0.01f);
     smoothedEnvAttack.setTargetValue(state.getRawParameterValue("envAttack")->load());
     smoothedEnvRelease.setTargetValue(state.getRawParameterValue("envRelease")->load());
-    preEnvelopeFollower.prepare(getSampleRate(), getTotalNumInputChannels(),
+    const auto numChannelsForProcessing = std::max(2u, static_cast<unsigned int>(std::max(getTotalNumInputChannels(), getTotalNumOutputChannels())));
+
+    preEnvelopeFollower.prepare(getSampleRate(), numChannelsForProcessing,
         smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue());
-    postEnvelopeFollower.prepare(getSampleRate(), getTotalNumInputChannels(),
+    postEnvelopeFollower.prepare(getSampleRate(), numChannelsForProcessing,
         smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue());
 
     //Compressor Preparation--------------------------------------------------------------------------------------------
-    compressor.prepare(getSampleRate(), getTotalNumInputChannels(),
+    compressor.prepare(getSampleRate(), numChannelsForProcessing,
         smoothedCompThresh.getCurrentValue(), smoothedCompRatio.getCurrentValue(),
         smoothedCompAttack.getCurrentValue(), smoothedCompRelease.getCurrentValue());
 
@@ -47,23 +49,21 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
         smoothedDrive.getCurrentValue(), smoothedThresh.getCurrentValue(),
         smoothedMix.getCurrentValue(), smoothedOutput.getCurrentValue());
 
-    filter.prepare(spec);
-    filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-    filter.setCutoffFrequency(20000.0f);
-    filter.setResonance(0.7f);
-
     smoothedDrive.reset(sampleRate, 0.01f);
     smoothedThresh.reset(sampleRate, 0.01f);
     smoothedOutput.reset(sampleRate, 0.01f);
     smoothedMix.reset(sampleRate, 0.01f);
-    smoothedCutoff.reset(sampleRate, 0.01f);
-    smoothedReso.reset(sampleRate, 0.01f);
     smoothedDrive.setTargetValue(state.getRawParameterValue("drive")->load());
     smoothedThresh.setTargetValue(state.getRawParameterValue("thresh")->load());
     smoothedOutput.setTargetValue(state.getRawParameterValue("output")->load());
     smoothedMix.setTargetValue(state.getRawParameterValue("mix")->load());
+
+    //Filter preparation------------------------------------------------------------------------------------------------
+    /*filter.prepare();
+    smoothedCutoff.reset(sampleRate, 0.01f);
+    smoothedReso.reset(sampleRate, 0.01f);
     smoothedCutoff.setTargetValue(state.getRawParameterValue("cutoff")->load());
-    smoothedReso.setTargetValue(state.getRawParameterValue("resonance")->load());
+    smoothedReso.setTargetValue(state.getRawParameterValue("resonance")->load());*/
 
     //Multiband Preparation---------------------------------------------------------------------------------------------
     lowCrossoverWide.prepare(spec);
@@ -112,8 +112,12 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedThresh.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("thresh")->load()));
     smoothedOutput.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("output")->load()));
     smoothedMix.setTargetValue(state.getRawParameterValue("mix")->load());
-    //smoothedCutoff.setTargetValue(state.getRawParameterValue("cutoff")->load());
-    //smoothedReso.setTargetValue(state.getRawParameterValue("resonance")->load());
+
+    /*//Filter------------------------------------------------------------------------------------------------------------
+    smoothedCutoff.setTargetValue(state.getRawParameterValue("cutoff")->load());
+    smoothedReso.setTargetValue(state.getRawParameterValue("resonance")->load());
+    filter.setResonance(smoothedReso.getNextValue());
+    filter.setCutoff(smoothedCutoff.getNextValue());*/
 
     //Compressor--------------------------------------------------------------------------------------------------------
     smoothedCompAttack.setTargetValue(state.getRawParameterValue("compAttack")->load());
@@ -121,30 +125,18 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedCompThresh.setTargetValue(state.getRawParameterValue("compThresh")->load());
     smoothedCompRatio.setTargetValue(state.getRawParameterValue("compRatio")->load());
 
-    /*//Filter
-    if (filterType == Lowpass) {
-        filter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-    }
-    else if (filterType == Highpass) {
-        filter.setType(juce::dsp::StateVariableTPTFilterType::highpass);
-    }
-    else if (filterType == Bandpass) {
-        filter.setType(juce::dsp::StateVariableTPTFilterType::bandpass);
-    }
-
-    if (filterOrder == Pre) {
-        smoothedCutoff.skip(buffer.getNumSamples());//Uses entire buffer
-        filter.setCutoffFrequency(smoothedCutoff.getCurrentValue());
-        smoothedReso.skip(buffer.getNumSamples());//Uses entire buffer
-        filter.setResonance(smoothedReso.getCurrentValue());
-        juce::dsp::AudioBlock<float> block(buffer); //(kinda) makes a copy of the buffer
-        juce::dsp::ProcessContextReplacing context(block);
-        filter.process(context);
-    }*/
+    // if (filter.getActivation() && filter.getFilterOrder() == Pre) {
+    //     smoothedCutoff.skip(buffer.getNumSamples());
+    //     filter.setCutoff(smoothedCutoff.getCurrentValue());
+    //     smoothedReso.skip(buffer.getNumSamples());
+    //     filter.setResonance(smoothedReso.getCurrentValue());
+    //     filter.myProcess(juce::dsp::AudioBlock<float>(buffer));
+    // }
 
     //Used for sample & hold
     float hold = 0;
     float counter = 0;
+
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
         //Assign parameters to class variables
         distortion.setDrive(smoothedDrive.getNextValue());
@@ -193,18 +185,15 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             if (postEnvelopeFollower.getActivation() == true) {
                 input[sample] *= postEnvelopeFollower.computeCorrectionGain(preEnvelopeFollower.getEnvPerChannel()[channel], channel);
             }
-
         }
     }
-    /*if (filterOrder == Post) {
-        smoothedCutoff.skip(buffer.getNumSamples());//Uses entire buffer
-        filter.setCutoffFrequency(smoothedCutoff.getCurrentValue());
-        smoothedReso.skip(buffer.getNumSamples());//Uses entire buffer
-        filter.setResonance(smoothedReso.getCurrentValue());
-        juce::dsp::AudioBlock<float> block(buffer); //(kinda) makes a copy of the buffer
-        juce::dsp::ProcessContextReplacing context(block);
-        filter.process(context);
-    }*/
+    // if (filter.getActivation() && filter.getFilterOrder() == Post) {
+    //     smoothedCutoff.skip(buffer.getNumSamples());
+    //     filter.setCutoff(smoothedCutoff.getCurrentValue());
+    //     smoothedReso.skip(buffer.getNumSamples());
+    //     filter.setResonance(smoothedReso.getCurrentValue());
+    //     filter.myProcess(juce::dsp::AudioBlock<float>(buffer));
+    // }
 
     visualizerBuffer.makeCopyOf(buffer);
 }
@@ -355,36 +344,42 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 }
 
 
-juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameters() {
+juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::createParameters()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    auto addFloatParam = [&layout](const juce::String& id,
+                                  const juce::String& name,
+                                  const juce::NormalisableRange<float>& range,
+                                  float defaultValue,
+                                  const juce::String& suffix = {})
+    {
+        layout.add(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { id },
+            name,
+            range,
+            defaultValue,
+            juce::AudioParameterFloatAttributes()
+                .withStringFromValueFunction([suffix](float value, int) {
+                    return juce::String(value, 2) + suffix;
+                })));
+    };
+
     juce::NormalisableRange<float> cutoffRange(20.0f, 20000.0f);
     cutoffRange.setSkewForCentre(1000.0f);
 
-    std::vector<ParamSpec> specs{
-        ParamSpec("drive", "drive", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f,
-            [](float value,int){ return juce::String(value, 2) + " dB"; }),
-        ParamSpec("thresh", "thresh", juce::NormalisableRange<float>(-36.0f, 0.0f), 0.0f,
-            [](float value,int){ return juce::String(value, 2) + " dB"; }),
-        ParamSpec("output", "output", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f,
-            [](float value,int){ return juce::String(value, 2) + " dB"; }),
-        ParamSpec("mix", "mix", juce::NormalisableRange<float>(0.0f, 100.0f), 100.0f,
-            [](float value,int){ return juce::String(value, 2) + "%"; }),
-        ParamSpec("cutoff", "cutoff", cutoffRange, 20000.0f,
-            [](float value,int){ return juce::String(value, 2) + "Hz"; }),
-        ParamSpec("resonance", "resonance", juce::NormalisableRange<float>(0.01f, 6.0f), 0.7f,
-            [](float value,int){ return juce::String(value, 2); }),
-        ParamSpec("envAttack", "envAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f,
-            [](float value,int){ return juce::String(value, 1) + " ms"; }),
-        ParamSpec("envRelease", "envRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f,
-            [](float value,int){ return juce::String(value, 1) + " ms"; }),
-        ParamSpec("compThresh", "compThresh", juce::NormalisableRange<float>(-36.0f, 0.0f), -6.0f,
-            [](float value,int){ return juce::String(value, 2) + " dB"; }),
-        ParamSpec("compRatio", "compRatio", juce::NormalisableRange<float>(1.0f, 10.0f), 3.0f,
-            [](float value,int){ return juce::String(value, 2) + ":1"; }),
-        ParamSpec("compAttack", "compAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f,
-            [](float value,int){ return juce::String(value, 1) + " ms"; }),
-        ParamSpec("compRelease", "compRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f,
-            [](float value,int){ return juce::String(value, 1) + " ms"; })
-    };
+    addFloatParam("drive", "drive", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f, " dB");
+    addFloatParam("thresh", "thresh", juce::NormalisableRange<float>(-36.0f, 0.0f), 0.0f, " dB");
+    addFloatParam("output", "output", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f, " dB");
+    addFloatParam("mix", "mix", juce::NormalisableRange<float>(0.0f, 100.0f), 100.0f, "%");
+    //addFloatParam("cutoff", "cutoff", cutoffRange, 20000.0f, "Hz");
+    //addFloatParam("resonance", "resonance", juce::NormalisableRange<float>(0.01f, 6.0f), 0.7f, "");
+    addFloatParam("envAttack", "envAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
+    addFloatParam("envRelease", "envRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
+    addFloatParam("compThresh", "compThresh", juce::NormalisableRange<float>(-36.0f, 0.0f), -6.0f, " dB");
+    addFloatParam("compRatio", "compRatio", juce::NormalisableRange<float>(1.0f, 10.0f), 3.0f, ":1");
+    addFloatParam("compAttack", "compAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
+    addFloatParam("compRelease", "compRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
 
-    return createParametersFromSpecs(specs);
+    return layout;
 }
