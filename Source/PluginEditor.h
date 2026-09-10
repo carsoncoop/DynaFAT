@@ -49,13 +49,15 @@ private:
 
     //Compressor
     juce::ToggleButton compressorButton;
-    juce::Slider compThreshSlider, compRatioSlider, compAttackSlider, compReleaseSlider;
+    juce::Slider compThreshHighSlider, compThreshLowSlider, compRatioSlider, compAttackSlider, compReleaseSlider;
     juce::AudioProcessorValueTreeState::SliderAttachment
-        compThreshSliderAttachment,
+        compThreshHighSliderAttachment,
+        compThreshLowSliderAttachment,
         compRatioSliderAttachment,
         compAttackSliderAttachment,
         compReleaseSliderAttachment;
-    juce::Label compThreshLabel{"compThreshLabel", "Thresh (+dB)"};
+    juce::Label compThreshHighLabel{"compThreshHighLabel", "High Thresh"};
+    juce::Label compThreshLowLabel{"compThreshLowLabel", "Low Thresh"};
     juce::Label compRatioLabel{"compRatioLabel", "Ratio"};
     juce::Label compAttackLabel{"compAttackLabel", "Attack"};
     juce::Label compReleaseLabel{"compReleaseLabel", "Release"};

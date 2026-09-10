@@ -12,13 +12,15 @@ class Compressor {
     std::vector<float> envPerChannel;
 
     float ratio = 1;
-    float thresh_dB = 1;
+    float thresh_dB_high = 1;
+    float thresh_dB_low = 1;
 
     bool activated = true;
 
 
 public:
-    void prepare(float sampleRate_, unsigned int numChannels_, float envAttackMs_, float envReleaseMs_, float ratio_, float thresh_dB_);
+    void prepare(float sampleRate_, unsigned int numChannels_, float envAttackMs_, float envReleaseMs_,
+        float ratio_, float thresh_dB_high_, float thresh_dB_low_);
 
     std::vector<float>& getEnvPerChannel() { return envPerChannel; }
 
@@ -31,7 +33,8 @@ public:
 
     //ratio & thresh
     void setRatio(float ratio_);
-    void setThresh(float thresh_dB_);
+    void setThreshHigh(float thresh_dB_high_);
+    void setThreshLow(float thresh_dB_low_);
 
     void followEnv (float inputSample, int channelIndex);
 

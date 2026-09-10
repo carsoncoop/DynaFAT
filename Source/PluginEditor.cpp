@@ -15,7 +15,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     mixSliderAttachment(processorRef.getState(), "mix", mixSlider),
     /*cutoffSliderAttachment(processorRef.getState(), "cutoff", cutoffSlider),
     resoSliderAttachment(processorRef.getState(), "resonance", resoSlider),*/
-    compThreshSliderAttachment(processorRef.getState(), "compThresh", compThreshSlider),
+    compThreshHighSliderAttachment(processorRef.getState(), "compThreshHigh", compThreshHighSlider),
+    compThreshLowSliderAttachment(processorRef.getState(), "compThreshLow", compThreshLowSlider),
     compRatioSliderAttachment(processorRef.getState(), "compRatio", compRatioSlider),
     compAttackSliderAttachment(processorRef.getState(), "compAttack", compAttackSlider),
     compReleaseSliderAttachment(processorRef.getState(), "compRelease", compReleaseSlider),
@@ -104,7 +105,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     };
 
     //Compressor Parameters---------------------------------------------------------------------------------------------
-    setupKnob(compThreshSlider, compThreshLabel);
+    setupKnob(compThreshHighSlider, compThreshHighLabel);
+    setupKnob(compThreshLowSlider, compThreshLowLabel);
     setupKnob(compRatioSlider, compRatioLabel);
     setupKnob(compAttackSlider, compAttackLabel);
     setupKnob(compReleaseSlider, compReleaseLabel);
@@ -113,10 +115,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     compressorButton.setToggleState(true, juce::dontSendNotification);
     compressorButton.onClick = [this] {
         if (compressorButton.getToggleState()) {
-            processorRef.getPreEnvelopeFollower().setActivation(true);
+            processorRef.getCompressor().setActivation(true);
         }
         else {
-            processorRef.getPreEnvelopeFollower().setActivation(false);
+            processorRef.getCompressor().setActivation(false);
         }
     };
 
@@ -250,12 +252,14 @@ void AudioPluginAudioProcessorEditor::resized()
     //Compressor Drawings-----------------------------------------------------------------------------------------------
     compressorButton.setBounds(getWidth() / 5 * 4 - 30, getHeight() / 5 - 65, 60, 30);
 
-    compThreshSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 3 - 40, 90, 90);
+    compThreshHighSlider.setBounds(getWidth() / 5 * 4 + 35, getHeight() / 15 * 3 - 40, 60, 60);
+    compThreshLowSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 3 - 40, 60, 60);
     compRatioSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 5 - 40, 90, 90);
     compAttackSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 7 - 40, 90, 90);
     compReleaseSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 9 - 40, 90, 90);
 
-    compThreshLabel.setBounds(compThreshSlider.getX(), compThreshSlider.getBottom() - 10, compThreshSlider.getWidth(), 18);
+    compThreshHighLabel.setBounds(compThreshHighSlider.getX(), compThreshHighSlider.getBottom() - 10, compThreshHighSlider.getWidth(), 18);
+    compThreshLowLabel.setBounds(compThreshLowSlider.getX(), compThreshLowSlider.getBottom() - 10, compThreshLowSlider.getWidth(), 18);
     compRatioLabel.setBounds(compRatioSlider.getX(), compRatioSlider.getBottom() - 10, compRatioSlider.getWidth(), 18);
     compAttackLabel.setBounds(compAttackSlider.getX(), compAttackSlider.getBottom() - 10, compAttackSlider.getWidth(), 18);
     compReleaseLabel.setBounds(compReleaseSlider.getX(), compReleaseSlider.getBottom() - 10, compReleaseSlider.getWidth(), 18);

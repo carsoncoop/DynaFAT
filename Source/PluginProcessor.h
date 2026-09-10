@@ -66,7 +66,8 @@ public:
     juce::SmoothedValue<float> smoothedEnvRelease;
 
     //Compressor controls (loaded for use, not yet connected to DSP)
-    juce::SmoothedValue<float> smoothedCompThresh;
+    juce::SmoothedValue<float> smoothedCompThreshHigh;
+    juce::SmoothedValue<float> smoothedCompThreshLow;
     juce::SmoothedValue<float> smoothedCompRatio;
     juce::SmoothedValue<float> smoothedCompAttack;
     juce::SmoothedValue<float> smoothedCompRelease;

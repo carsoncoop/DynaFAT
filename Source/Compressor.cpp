@@ -4,7 +4,7 @@
 
 void Compressor::prepare(const float sampleRate_, const unsigned int numChannels_,
     const float envAttackMs_, const float envReleaseMs_,
-    const float ratio_, const float thresh_dB_) {
+    const float ratio_, const float thresh_dB_high_, const float thresh_dB_low_) {
 
     sampleRate = sampleRate_;
     numChannels = std::max(2u, numChannels_);
@@ -15,7 +15,8 @@ void Compressor::prepare(const float sampleRate_, const unsigned int numChannels
     envReleaseCoeff = 1.0f - std::exp(-1.0f / (envReleaseMs_ * 0.001f * sampleRate));
 
     ratio = ratio_;
-    thresh_dB = thresh_dB_;
+    thresh_dB_high = thresh_dB_high_;
+    thresh_dB_low = thresh_dB_low_;
 }
 
 void Compressor::setEnvAttack(const float envAttackMs_) {
@@ -30,8 +31,12 @@ void Compressor::setRatio(const float ratio_) {
     ratio = ratio_;
 }
 
-void Compressor::setThresh(const float thresh_dB_) {
-    thresh_dB = thresh_dB_;
+void Compressor::setThreshHigh(const float thresh_dB_high_) {
+    thresh_dB_high = thresh_dB_high_;
+}
+
+void Compressor::setThreshLow(const float thresh_dB_low_) {
+    thresh_dB_low = thresh_dB_low_;
 }
 
 void Compressor::followEnv (const float inputSample, const int channelIndex) {
@@ -53,14 +58,21 @@ float Compressor::computeGainChange(const int channelIndex) const {
     const float envLinear = std::max(envPerChannel[channelIndex], eps);
     const float env_dB = juce::Decibels::gainToDecibels(envLinear);
 
-    float gainReduction_dB = 0.0f;
+    float gainChange_dB = 0.0f;
 
-    if (env_dB > thresh_dB) {
-        const float overshoot_dB = env_dB - thresh_dB;
-        gainReduction_dB = overshoot_dB * (1.0f - 1.0f / ratio);
+    //Downward Compression
+    if (env_dB > thresh_dB_high) {
+        const float overshoot_dB = env_dB - thresh_dB_high;
+        gainChange_dB = -(overshoot_dB * (1.0f - 1.0f / ratio));
+    }
+
+    //Upward Compression
+    else if (env_dB < thresh_dB_low) {
+        const float undershoot_dB = thresh_dB_low - env_dB;
+        gainChange_dB = (undershoot_dB * (1.0f - 1.0f / ratio));
     }
 
     //Return linear gain
-    return juce::Decibels::decibelsToGain(-gainReduction_dB);
+    return juce::Decibels::decibelsToGain(gainChange_dB);
 }
 

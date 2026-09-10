@@ -31,12 +31,9 @@ Future Knobs:
 
 Known bugs:
 - UI's buttons reset visually when closed, but not in the dsp
-- Compressor button broken
+- Slight click artifact on upward compression (only?)
 
 Current To-Do List:
-- Optimize parameter instantiation in classes to continue working on compressor. More bands will mean MANY more parameters.
-- Upward Compression
-- Make a filter class
 
 Effect Class Layout:
 - Member variables store state of parameters through setter functions

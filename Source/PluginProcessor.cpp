@@ -41,14 +41,16 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
         smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue());
 
     //Compressor Preparation--------------------------------------------------------------------------------------------
-    prepareSmoothed(smoothedCompThresh, "compThresh");
+    prepareSmoothed(smoothedCompThreshHigh, "compThreshHigh");
+    prepareSmoothed(smoothedCompThreshLow, "compThreshLow");
     prepareSmoothed(smoothedCompRatio, "compRatio");
     prepareSmoothed(smoothedCompAttack, "compAttack");
     prepareSmoothed(smoothedCompRelease, "compRelease");
 
-    compressor.prepare(getSampleRate(), numProcessingChannels,
-        smoothedCompThresh.getCurrentValue(), smoothedCompRatio.getCurrentValue(),
-        smoothedCompAttack.getCurrentValue(), smoothedCompRelease.getCurrentValue());
+    compressor.prepare(getSampleRate(), numProcessingChannels,smoothedCompAttack.getCurrentValue(),
+        smoothedCompRelease.getCurrentValue(), smoothedCompRatio.getCurrentValue(),
+        smoothedCompThreshHigh.getCurrentValue(), smoothedCompThreshLow.getCurrentValue()
+        );
 
     //Distortion Preparation--------------------------------------------------------------------------------------------
     prepareSmoothed(smoothedDrive, "drive");
@@ -118,7 +120,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //Compressor--------------------------------------------------------------------------------------------------------
     smoothedCompAttack.setTargetValue(state.getRawParameterValue("compAttack")->load());
     smoothedCompRelease.setTargetValue(state.getRawParameterValue("compRelease")->load());
-    smoothedCompThresh.setTargetValue(state.getRawParameterValue("compThresh")->load());
+    smoothedCompThreshHigh.setTargetValue(state.getRawParameterValue("compThreshHigh")->load());
+    smoothedCompThreshLow.setTargetValue(state.getRawParameterValue("compThreshLow")->load());
     smoothedCompRatio.setTargetValue(state.getRawParameterValue("compRatio")->load());
 
     /*if (filter.getActivation() && filter.getFilterOrder() == Pre) {
@@ -147,7 +150,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
         compressor.setEnvAttack(smoothedCompAttack.getNextValue());
         compressor.setEnvRelease(smoothedCompRelease.getNextValue());
-        compressor.setThresh(smoothedCompThresh.getNextValue());
+        compressor.setThreshHigh(smoothedCompThreshHigh.getNextValue());
+        compressor.setThreshLow(smoothedCompThreshLow.getNextValue());
         compressor.setRatio(smoothedCompRatio.getNextValue());
 
         //Channel processing
@@ -173,9 +177,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 input[sample] = distortion.process(input[sample]);
             }
             //Compression
-            compressor.followEnv(input[sample], channel);
-            input[sample] *= compressor.computeGainChange(channel);
-
+            if (compressor.getActivation()) {
+                compressor.followEnv(input[sample], channel);
+                input[sample] *= compressor.computeGainChange(channel);
+            }
 
             //Post processing envelope
             postEnvelopeFollower.followEnv(input[sample], channel);
@@ -374,10 +379,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     //addFloatParam("resonance", "resonance", juce::NormalisableRange<float>(0.01f, 6.0f), 0.7f, "");
     addFloatParam("envAttack", "envAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
     addFloatParam("envRelease", "envRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
-    addFloatParam("compThresh", "compThresh", juce::NormalisableRange<float>(-36.0f, 0.0f), -6.0f, " dB");
+    addFloatParam("compThreshHigh", "compThreshHigh", juce::NormalisableRange<float>(-36.0f, 0.0f), -6.0f, " dB");
+    addFloatParam("compThreshLow", "compThreshLow", juce::NormalisableRange<float>(-36.0f, 0.0f), -12.0f, " dB");
     addFloatParam("compRatio", "compRatio", juce::NormalisableRange<float>(1.0f, 10.0f), 3.0f, ":1");
     addFloatParam("compAttack", "compAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
-    addFloatParam("compRelease", "compRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
+    addFloatParam("compRelease", "compRelease", juce::NormalisableRange<float>(2.0f, 200.0f), 15.0f, " ms");
 
     return layout;
 }
