@@ -58,6 +58,10 @@ float Compressor::computeGainChange(const int channelIndex) const {
     const float envLinear = std::max(envPerChannel[channelIndex], eps);
     const float env_dB = juce::Decibels::gainToDecibels(envLinear);
 
+    //knee == 0.0f is a hard knee. Trying soft knee
+    //const float knee = 2.0f;
+    //const float halfKnee = knee / 2.0f;
+
     float gainChange_dB = 0.0f;
 
     //Downward Compression

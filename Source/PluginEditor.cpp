@@ -9,6 +9,9 @@ void AudioPluginAudioProcessorEditor::timerCallback()
 }
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p),
+    algButtonAttachment(processorRef.getState(), "algButton", algButton),
+    compressorButtonAttachment(processorRef.getState(), "compressorButton", compressorButton),
+    envelopeButtonAttachment(processorRef.getState(), "envelopeButton", envelopeButton),
     satSliderAttachment(processorRef.getState(), "drive", satSlider),
     threshSliderAttachment(processorRef.getState(), "thresh", threshSlider),
     outputSliderAttachment(processorRef.getState(), "output", outputSlider),
@@ -43,6 +46,38 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         slider.setPopupMenuEnabled(menuEnabled);
         setupLabel(label, font);
         addAndMakeVisible(slider);
+    };
+
+    //Prevents dependent knobs from crossing paths
+    const float threshGap = 0.1f;
+
+    auto enforceStrictOrder = [] (juce::Slider& lower, juce::Slider& upper, float minGap = 0.1f) {
+        auto fix = [&] () {
+            const double lowerVal = lower.getValue();
+            const double upperVal = upper.getValue();
+
+            if (lowerVal >= upperVal) {
+                const auto newHigh = juce::jlimit(upper.getMinimum(),
+                                                             upper.getMaximum(),
+                                                             lowerVal + minGap);
+                const auto newLow = juce::jlimit(lower.getMinimum(),
+                                            lower.getMaximum(),
+                                            upperVal - minGap);
+
+                if (newHigh <= lower.getValue())
+                    lower.setValue(upperVal - minGap, juce::dontSendNotification);
+                else
+                    upper.setValue(newHigh, juce::dontSendNotification);
+
+                if (newLow >= upperVal)
+                    upper.setValue(lowerVal + minGap, juce::dontSendNotification);
+                else
+                    lower.setValue(newLow, juce::dontSendNotification);
+            }
+        };
+        lower.onValueChange = [fix] { fix();};
+        upper.onValueChange = [fix] { fix();};
+        fix();
     };
     //Headers-----------------------------------------------------------------------------------------------------------
     setupLabel(distortionHeader);
@@ -121,6 +156,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             processorRef.getCompressor().setActivation(false);
         }
     };
+    enforceStrictOrder(compThreshLowSlider, compThreshHighSlider, threshGap);
+
 
     //Envelope Follower Parameters--------------------------------------------------------------------------------------
     setupKnob(envAttackSlider, envAttackLabel);

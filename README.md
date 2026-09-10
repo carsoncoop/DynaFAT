@@ -7,14 +7,9 @@ Requirements:
 - JUCE framework
 
 Goals:
-- Implement multiband compression class 
-  - Begin with a simple, one band, downward compressor without artifacts 
-  - Create upward compression 
-  - Split into 3 bands
+- Implement multiband compression class
 - Reduce user controls to be concise while allowing for customizability
 - Optimize CPU performance in buffer processing
-- Minimize code required for parameter instantiation & loading
-- Minimize code for UI updates
 - Uncomment filter implementation and turn it into a class like the other effects
 
 Future Features:
@@ -31,9 +26,11 @@ Future Knobs:
 
 Known bugs:
 - UI's buttons reset visually when closed, but not in the dsp
-- Slight click artifact on upward compression (only?)
+- Slight click artifact on upward compression (only?). Maybe a soft knee would help.
 
 Current To-Do List:
+- Combine knob value dependency lambdas into one function
+- Incorporate knee into downward compression
 
 Effect Class Layout:
 - Member variables store state of parameters through setter functions

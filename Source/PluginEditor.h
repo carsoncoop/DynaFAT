@@ -30,6 +30,9 @@ private:
     juce::Label envelopeHeader{"envelopeHeader", "DYNAMICS"};
 
     //Distortion
+    juce::TextButton algButton;
+    juce::AudioProcessorValueTreeState::ButtonAttachment algButtonAttachment;
+
     juce::Slider satSlider;
     juce::Slider threshSlider;
     juce::Slider outputSlider;
@@ -45,10 +48,12 @@ private:
     juce::AudioProcessorValueTreeState::SliderAttachment mixSliderAttachment;
 
     juce::AudioVisualiserComponent visual {1};
-    juce::TextButton algButton;
+
 
     //Compressor
     juce::ToggleButton compressorButton;
+    juce::AudioProcessorValueTreeState::ButtonAttachment compressorButtonAttachment;
+
     juce::Slider compThreshHighSlider, compThreshLowSlider, compRatioSlider, compAttackSlider, compReleaseSlider;
     juce::AudioProcessorValueTreeState::SliderAttachment
         compThreshHighSliderAttachment,
@@ -64,6 +69,7 @@ private:
 
     //Envelope Follower
     juce::ToggleButton envelopeButton;
+    juce::AudioProcessorValueTreeState::ButtonAttachment envelopeButtonAttachment;
 
     juce::Slider envAttackSlider, envReleaseSlider;
     juce::AudioProcessorValueTreeState::SliderAttachment envAttackSliderAttachment, envReleaseSliderAttachment;
