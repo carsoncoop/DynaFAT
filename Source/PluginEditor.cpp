@@ -31,18 +31,17 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         addAndMakeVisible(label);
     };
     auto setupKnob = [this, &setupLabel] (juce::Slider& slider, juce::Label& label,
-                                         bool popupDisplay = true, bool menuEnabled = false,
+                                         bool popupDisplay = true, bool menuEnabled = true,
                                          juce::Component* popupOwner = nullptr,
-                                         const juce::Font& font = juce::Font(juce::FontOptions { 0.0f }))
+                                         const juce::Font& font = juce::Font(juce::FontOptions { 14.0f }))
     {
         juce::Component* owner = popupOwner ? popupOwner : this;
         slider.setPopupDisplayEnabled(popupDisplay, false, owner);
         slider.setSliderStyle(juce::Slider::RotaryVerticalDrag);
         slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
         slider.setPopupMenuEnabled(menuEnabled);
-        addAndMakeVisible(slider);
         setupLabel(label, font);
-
+        addAndMakeVisible(slider);
     };
     //Headers-----------------------------------------------------------------------------------------------------------
     setupLabel(distortionHeader);
@@ -57,6 +56,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     addAndMakeVisible(visual);
 
     //Distortion Parameters---------------------------------------------------------------------------------------------
+
+    setupKnob(satSlider, satLabel);
+    setupKnob(threshSlider, threshLabel);
+    setupKnob(outputSlider, outputLabel);
+    setupKnob(mixSlider, mixLabel);
+    addAndMakeVisible(algButton);
 
     algButton.setButtonText("Soft Clip");
     algButton.onClick = [this]() {
@@ -97,14 +102,14 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                 }
         });
     };
-    addAndMakeVisible(algButton);
-
-    setupKnob(satSlider, satLabel);
-    setupKnob(threshSlider, threshLabel);
-    setupKnob(outputSlider, outputLabel);
-    setupKnob(mixSlider, mixLabel, true, true);
 
     //Compressor Parameters---------------------------------------------------------------------------------------------
+    setupKnob(compThreshSlider, compThreshLabel);
+    setupKnob(compRatioSlider, compRatioLabel);
+    setupKnob(compAttackSlider, compAttackLabel);
+    setupKnob(compReleaseSlider, compReleaseLabel);
+    addAndMakeVisible(compressorButton);
+
     compressorButton.setToggleState(true, juce::dontSendNotification);
     compressorButton.onClick = [this] {
         if (compressorButton.getToggleState()) {
@@ -114,15 +119,12 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             processorRef.getPreEnvelopeFollower().setActivation(false);
         }
     };
-    addAndMakeVisible(compressorButton);
-
-    setupKnob(compThreshSlider, compThreshLabel);
-    setupKnob(compRatioSlider, compRatioLabel);
-    setupKnob(compAttackSlider, compAttackLabel);
-    setupKnob(compReleaseSlider, compReleaseLabel);
 
     //Envelope Follower Parameters--------------------------------------------------------------------------------------
+    setupKnob(envAttackSlider, envAttackLabel);
+    setupKnob(envReleaseSlider, envReleaseLabel);
     addAndMakeVisible(envelopeButton);
+
     envelopeButton.setToggleState(true, juce::dontSendNotification);
     envelopeButton.onClick = [this] {
         if (envelopeButton.getToggleState()) {
@@ -135,8 +137,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         }
     };
 
-    setupKnob(envAttackSlider, envAttackLabel, true, true, nullptr, juce::Font (juce::FontOptions { 10.0f }));
-    setupKnob(envReleaseSlider, envReleaseLabel, true, true, nullptr, juce::Font (juce::FontOptions { 10.0f }));
+
 
     setSize (600, 700);
     //Filter stuff below------------------------------------------------------------------------------------------------
@@ -230,36 +231,34 @@ void AudioPluginAudioProcessorEditor::resized()
 {
     visual.setBounds(getWidth() / 2 - 75,20, 150 ,150);
     distortionHeader.setBounds(getWidth() / 5 - 62,-40, 150 ,150);
-    compressionHeader.setBounds(getWidth() / 5 * 4 - 75,-40, 150 ,150);
+    compressionHeader.setBounds(getWidth() / 5 * 4 - 62,-40, 150 ,150);
     envelopeHeader.setBounds(getWidth() / 2 - 75, getHeight() / 5 * 3, 150, 150);
 
     //Distortion Drawings-----------------------------------------------------------------------------------------------
-    satLabel.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 3 - 20, 50, 50);
-    threshLabel.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 5 - 20, 50, 50);
-    outputLabel.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 7 - 20, 50, 50);
-    mixLabel.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 9 - 20, 50, 50);
-
+    algButton.setBounds(getWidth() / 5 - 28, getHeight() / 5 - 80, 80, 30);
 
     satSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 3 - 40, 90, 90);
     threshSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 5 - 40, 90, 90);
     outputSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 7 - 40, 90, 90);
     mixSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 9 - 40, 90, 90);
 
-
-    algButton.setBounds(getWidth() / 5 - 28, getHeight() / 5 - 80, 80, 30);
+    satLabel.setBounds(satSlider.getX(), satSlider.getBottom() - 10, satSlider.getWidth(), 18);
+    threshLabel.setBounds(threshSlider.getX(), threshSlider.getBottom() - 10, threshSlider.getWidth(), 18);
+    outputLabel.setBounds(outputSlider.getX(), outputSlider.getBottom() - 10, outputSlider.getWidth(), 18);
+    mixLabel.setBounds(mixSlider.getX(), mixSlider.getBottom() - 10, mixSlider.getWidth(), 18);
 
     //Compressor Drawings-----------------------------------------------------------------------------------------------
-    compressorButton.setBounds(getWidth() / 5 * 4 - 10, getHeight() / 5 - 65, 60, 30);
+    compressorButton.setBounds(getWidth() / 5 * 4 - 30, getHeight() / 5 - 65, 60, 30);
 
     compThreshSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 3 - 40, 90, 90);
     compRatioSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 5 - 40, 90, 90);
     compAttackSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 7 - 40, 90, 90);
     compReleaseSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 9 - 40, 90, 90);
 
-    compThreshLabel.setBounds(compThreshSlider.getX(), compThreshSlider.getBottom() - 8, compThreshSlider.getWidth(), 18);
-    compRatioLabel.setBounds(compRatioSlider.getX(), compRatioSlider.getBottom() - 8, compRatioSlider.getWidth(), 18);
-    compAttackLabel.setBounds(compAttackSlider.getX(), compAttackSlider.getBottom() - 8, compAttackSlider.getWidth(), 18);
-    compReleaseLabel.setBounds(compReleaseSlider.getX(), compReleaseSlider.getBottom() - 8, compReleaseSlider.getWidth(), 18);
+    compThreshLabel.setBounds(compThreshSlider.getX(), compThreshSlider.getBottom() - 10, compThreshSlider.getWidth(), 18);
+    compRatioLabel.setBounds(compRatioSlider.getX(), compRatioSlider.getBottom() - 10, compRatioSlider.getWidth(), 18);
+    compAttackLabel.setBounds(compAttackSlider.getX(), compAttackSlider.getBottom() - 10, compAttackSlider.getWidth(), 18);
+    compReleaseLabel.setBounds(compReleaseSlider.getX(), compReleaseSlider.getBottom() - 10, compReleaseSlider.getWidth(), 18);
 
     //Envelope Follower Drawings----------------------------------------------------------------------------------------
 
@@ -268,8 +267,8 @@ void AudioPluginAudioProcessorEditor::resized()
     envAttackSlider.setBounds(200, getHeight() / 5 * 4, 80, 80);
     envReleaseSlider.setBounds(320, getHeight() / 5 * 4, 80, 80);
 
-    envAttackLabel.setBounds(envAttackSlider.getX(), envAttackSlider.getBottom() - 8, envAttackSlider.getWidth(), 18);
-    envReleaseLabel.setBounds(envReleaseSlider.getX(), envReleaseSlider.getBottom() - 8, envReleaseSlider.getWidth(), 18);
+    envAttackLabel.setBounds(envAttackSlider.getX(), envAttackSlider.getBottom() - 10, envAttackSlider.getWidth(), 18);
+    envReleaseLabel.setBounds(envReleaseSlider.getX(), envReleaseSlider.getBottom() - 10, envReleaseSlider.getWidth(), 18);
 
     /*//Filter Drawings---------------------------------------------------------------------------------------------------
      filterTypeButton.setBounds(getWidth() / 5 * 4 - 40, getHeight() / 5 - 70, 80, 30);
