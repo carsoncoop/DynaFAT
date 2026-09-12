@@ -82,17 +82,6 @@ float Compressor::computeGainChange(const int channelIndex) {
     const float coeff = (desiredGain_dB < currentGainDb) ? envAttackCoeff : envReleaseCoeff;
     currentGainDb += coeff * (desiredGain_dB - currentGainDb);
 
-#ifdef COMPRESSOR_DEBUG
-    static int debugCount = 0;
-    if (debugCount++ < 200) {
-        juce::String msg = juce::String::formatted(
-            "[COMP_DBG] ch=%d env_dB=%.3f desired_dB=%.3f cur_dB=%.3f coeff=%.6f linGain=%.6f",
-            channelIndex, env_dB, desiredGain_dB, currentGainDb, coeff, juce::Decibels::decibelsToGain(currentGainDb)
-        );
-        juce::Logger::outputDebugString(msg);
-    }
-#endif
-
     //Return linear gain (to multiply input sample)
     return juce::Decibels::decibelsToGain(currentGainDb);
 }
