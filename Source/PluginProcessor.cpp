@@ -368,6 +368,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
                 })));
     };
 
+    auto addBoolParam = [&](const juce::String& id, const juce::String& name, bool def) {
+        layout.add(std::make_unique<juce::AudioParameterBool>(id, name, def));
+    };
+
+    auto addChoiceParam = [&](const juce::String& id, const juce::String& name,
+        const juce::StringArray& choices, int defaultIndex) {
+        layout.add(std::make_unique<juce::AudioParameterChoice>(id, name, choices, defaultIndex));
+    };
+
     juce::NormalisableRange<float> cutoffRange(20.0f, 20000.0f);
     cutoffRange.setSkewForCentre(1000.0f);
 
@@ -384,6 +393,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     addFloatParam("compRatio", "compRatio", juce::NormalisableRange<float>(1.0f, 10.0f), 3.0f, ":1");
     addFloatParam("compAttack", "compAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
     addFloatParam("compRelease", "compRelease", juce::NormalisableRange<float>(2.0f, 200.0f), 15.0f, " ms");
+
+    addChoiceParam("algButton", "algButton", {"Soft Clip", "Hard Clip", "Foldback", "Downsample"}, 0);
+    addBoolParam("compressorButton", "compressorButton", true);
+    addBoolParam("envelopeButton", "envelopeButton", true);
 
     return layout;
 }

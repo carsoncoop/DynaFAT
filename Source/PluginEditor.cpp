@@ -1,7 +1,17 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+void linkMinMaxSliders (juce::Slider& minSlider, juce::Slider& maxSlider){
+    minSlider.onValueChange = [&minSlider, &maxSlider] {
+        if (minSlider.getValue() > maxSlider.getValue())
+            maxSlider.setValue (minSlider.getValue());
+    };
 
+    maxSlider.onValueChange = [&minSlider, &maxSlider] {
+        if (maxSlider.getValue() < minSlider.getValue())
+            minSlider.setValue (maxSlider.getValue());
+    };
+}
 //==============================================================================
 void AudioPluginAudioProcessorEditor::timerCallback()
 {
@@ -10,19 +20,19 @@ void AudioPluginAudioProcessorEditor::timerCallback()
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p),
     algButtonAttachment(processorRef.getState(), "algButton", algButton),
-    compressorButtonAttachment(processorRef.getState(), "compressorButton", compressorButton),
-    envelopeButtonAttachment(processorRef.getState(), "envelopeButton", envelopeButton),
     satSliderAttachment(processorRef.getState(), "drive", satSlider),
     threshSliderAttachment(processorRef.getState(), "thresh", threshSlider),
     outputSliderAttachment(processorRef.getState(), "output", outputSlider),
     mixSliderAttachment(processorRef.getState(), "mix", mixSlider),
     /*cutoffSliderAttachment(processorRef.getState(), "cutoff", cutoffSlider),
     resoSliderAttachment(processorRef.getState(), "resonance", resoSlider),*/
+    compressorButtonAttachment(processorRef.getState(), "compressorButton", compressorButton),
     compThreshHighSliderAttachment(processorRef.getState(), "compThreshHigh", compThreshHighSlider),
     compThreshLowSliderAttachment(processorRef.getState(), "compThreshLow", compThreshLowSlider),
     compRatioSliderAttachment(processorRef.getState(), "compRatio", compRatioSlider),
     compAttackSliderAttachment(processorRef.getState(), "compAttack", compAttackSlider),
     compReleaseSliderAttachment(processorRef.getState(), "compRelease", compReleaseSlider),
+    envelopeButtonAttachment(processorRef.getState(), "envelopeButton", envelopeButton),
     envAttackSliderAttachment(processorRef.getState(), "envAttack", envAttackSlider),
     envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider)
 {
@@ -48,37 +58,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         addAndMakeVisible(slider);
     };
 
-    //Prevents dependent knobs from crossing paths
-    const float threshGap = 0.1f;
-
-    auto enforceStrictOrder = [] (juce::Slider& lower, juce::Slider& upper, float minGap = 0.1f) {
-        auto fix = [&] () {
-            const double lowerVal = lower.getValue();
-            const double upperVal = upper.getValue();
-
-            if (lowerVal >= upperVal) {
-                const auto newHigh = juce::jlimit(upper.getMinimum(),
-                                                             upper.getMaximum(),
-                                                             lowerVal + minGap);
-                const auto newLow = juce::jlimit(lower.getMinimum(),
-                                            lower.getMaximum(),
-                                            upperVal - minGap);
-
-                if (newHigh <= lower.getValue())
-                    lower.setValue(upperVal - minGap, juce::dontSendNotification);
-                else
-                    upper.setValue(newHigh, juce::dontSendNotification);
-
-                if (newLow >= upperVal)
-                    upper.setValue(lowerVal + minGap, juce::dontSendNotification);
-                else
-                    lower.setValue(newLow, juce::dontSendNotification);
-            }
-        };
-        lower.onValueChange = [fix] { fix();};
-        upper.onValueChange = [fix] { fix();};
-        fix();
-    };
     //Headers-----------------------------------------------------------------------------------------------------------
     setupLabel(distortionHeader);
     setupLabel(compressionHeader);
@@ -99,7 +78,11 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setupKnob(mixSlider, mixLabel);
     addAndMakeVisible(algButton);
 
-    algButton.setButtonText("Soft Clip");
+    //Initialize algButton text
+    const juce::StringArray algChoices { "Soft Clip", "Hard Clip", "Foldback", "Downsample"};
+    int idx = static_cast<int>(std::round(processorRef.getState().getRawParameterValue("algButton")->load()));
+    algButton.setButtonText(algChoices[idx]);
+
     algButton.onClick = [this]() {
         juce::PopupMenu algMenu;
         algMenu.addItem(1, "Soft Clip");
@@ -147,7 +130,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setupKnob(compReleaseSlider, compReleaseLabel);
     addAndMakeVisible(compressorButton);
 
-    compressorButton.setToggleState(true, juce::dontSendNotification);
+    //Initialize compressorButton toggle
+    compressorButton.setToggleState(processorRef.getState().getRawParameterValue("compressorButton")->load() > 0.5f, juce::dontSendNotification);
     compressorButton.onClick = [this] {
         if (compressorButton.getToggleState()) {
             processorRef.getCompressor().setActivation(true);
@@ -156,7 +140,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             processorRef.getCompressor().setActivation(false);
         }
     };
-    enforceStrictOrder(compThreshLowSlider, compThreshHighSlider, threshGap);
+
+    linkMinMaxSliders(compThreshLowSlider, compThreshHighSlider);
 
 
     //Envelope Follower Parameters--------------------------------------------------------------------------------------
@@ -164,7 +149,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setupKnob(envReleaseSlider, envReleaseLabel);
     addAndMakeVisible(envelopeButton);
 
-    envelopeButton.setToggleState(true, juce::dontSendNotification);
+    //Initialize envelopeButton toggle
+    envelopeButton.setToggleState(processorRef.getState().getRawParameterValue("envelopeButton")->load() > 0.5f, juce::dontSendNotification);
     envelopeButton.onClick = [this] {
         if (envelopeButton.getToggleState()) {
             processorRef.getPreEnvelopeFollower().setActivation(true);

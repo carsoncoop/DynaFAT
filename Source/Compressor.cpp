@@ -10,6 +10,7 @@ void Compressor::prepare(const float sampleRate_, const unsigned int numChannels
     numChannels = std::max(2u, numChannels_);
 
     envPerChannel.assign(numChannels, 1e-6f);
+    smoothedGainDbPerChannel.assign(numChannels, 0.0f);
 
     envAttackCoeff = 1.0f - std::exp(-1.0f / (envAttackMs_ * 0.001f * sampleRate));
     envReleaseCoeff = 1.0f - std::exp(-1.0f / (envReleaseMs_ * 0.001f * sampleRate));
@@ -52,7 +53,7 @@ void Compressor::followEnv (const float inputSample, const int channelIndex) {
     envPerChannel[channelIndex] = env;
 }
 
-float Compressor::computeGainChange(const int channelIndex) const {
+float Compressor::computeGainChange(const int channelIndex) {
 
     constexpr float eps = 1e-6f;
     const float envLinear = std::max(envPerChannel[channelIndex], eps);
@@ -62,21 +63,37 @@ float Compressor::computeGainChange(const int channelIndex) const {
     //const float knee = 2.0f;
     //const float halfKnee = knee / 2.0f;
 
-    float gainChange_dB = 0.0f;
+    float desiredGain_dB = 0.0f;
 
     //Downward Compression
     if (env_dB > thresh_dB_high) {
         const float overshoot_dB = env_dB - thresh_dB_high;
-        gainChange_dB = -(overshoot_dB * (1.0f - 1.0f / ratio));
+        desiredGain_dB = -(overshoot_dB * (1.0f - 1.0f / ratio));
     }
 
     //Upward Compression
     else if (env_dB < thresh_dB_low) {
         const float undershoot_dB = thresh_dB_low - env_dB;
-        gainChange_dB = (undershoot_dB * (1.0f - 1.0f / ratio));
+        desiredGain_dB = (undershoot_dB * (1.0f - 1.0f / ratio));
     }
 
-    //Return linear gain
-    return juce::Decibels::decibelsToGain(gainChange_dB);
+    // Smooth the gain in dB
+    float& currentGainDb = smoothedGainDbPerChannel[channelIndex];
+    const float coeff = (desiredGain_dB < currentGainDb) ? envAttackCoeff : envReleaseCoeff;
+    currentGainDb += coeff * (desiredGain_dB - currentGainDb);
+
+#ifdef COMPRESSOR_DEBUG
+    static int debugCount = 0;
+    if (debugCount++ < 200) {
+        juce::String msg = juce::String::formatted(
+            "[COMP_DBG] ch=%d env_dB=%.3f desired_dB=%.3f cur_dB=%.3f coeff=%.6f linGain=%.6f",
+            channelIndex, env_dB, desiredGain_dB, currentGainDb, coeff, juce::Decibels::decibelsToGain(currentGainDb)
+        );
+        juce::Logger::outputDebugString(msg);
+    }
+#endif
+
+    //Return linear gain (to multiply input sample)
+    return juce::Decibels::decibelsToGain(currentGainDb);
 }
 

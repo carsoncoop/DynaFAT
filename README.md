@@ -25,11 +25,12 @@ Future Knobs:
   - Master gain
 
 Known bugs:
-- UI's buttons reset visually when closed, but not in the dsp
+- Alg options set to SoftClip whenever menu is closed.
 - Slight click artifact on upward compression (only?). Maybe a soft knee would help.
+- Compressing even in dead zone.
 
 Current To-Do List:
-- Combine knob value dependency lambdas into one function
+- Fix followEnv for the compressor class. It must be different than the standalone envelope follower for attack/release to function properly.
 - Incorporate knee into downward compression
 
 Effect Class Layout:

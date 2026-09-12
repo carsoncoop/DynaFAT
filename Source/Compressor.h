@@ -10,6 +10,8 @@ class Compressor {
     float envAttackCoeff = 0.0f;
     float envReleaseCoeff = 0.0f;
     std::vector<float> envPerChannel;
+    // per-channel smoothed gain in dB (0.0f = no change)
+    std::vector<float> smoothedGainDbPerChannel;
 
     float ratio = 1;
     float thresh_dB_high = 1;
@@ -40,5 +42,5 @@ public:
 
     // Compute the correction gain (returns linear multiplier)
     //Do math in dB
-    [[nodiscard]] float computeGainChange (int channelIndex) const;
+    [[nodiscard]] float computeGainChange (int channelIndex);
 };
