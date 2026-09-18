@@ -71,11 +71,12 @@ private:
     juce::ToggleButton envelopeButton;
     juce::AudioProcessorValueTreeState::ButtonAttachment envelopeButtonAttachment;
 
-    juce::Slider envAttackSlider, envReleaseSlider;
-    juce::AudioProcessorValueTreeState::SliderAttachment envAttackSliderAttachment, envReleaseSliderAttachment;
+    juce::Slider envAttackSlider, envReleaseSlider, envDynamixSlider;
+    juce::AudioProcessorValueTreeState::SliderAttachment envAttackSliderAttachment, envReleaseSliderAttachment, envDynamixSliderAttachment;
 
     juce::Label envAttackLabel{"envAttackLabel", "Attack"};
     juce::Label envReleaseLabel{"envReleaseLabel", "Release"};
+    juce::Label envDynamixLabel{"envDynamixLabel", "DynaMix"};
 
     //Filter
     /*juce::TextButton filterTypeButton;

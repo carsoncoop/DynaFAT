@@ -24,7 +24,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     compAttackSliderAttachment(processorRef.getState(), "compAttack", compAttackSlider),
     compReleaseSliderAttachment(processorRef.getState(), "compRelease", compReleaseSlider),
     envAttackSliderAttachment(processorRef.getState(), "envAttack", envAttackSlider),
-    envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider)
+    envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider),
+    envDynamixSliderAttachment(processorRef.getState(), "envDynamix", envDynamixSlider)
 {
     auto setupLabel = [this] (juce::Label& label, const juce::Font& font = juce::Font(), const juce::String& text = {}) {
         label.setJustificationType(juce::Justification::centred);
@@ -162,6 +163,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     //Envelope Follower Parameters--------------------------------------------------------------------------------------
     setupKnob(envAttackSlider, envAttackLabel);
     setupKnob(envReleaseSlider, envReleaseLabel);
+    setupKnob(envDynamixSlider, envDynamixLabel);
     addAndMakeVisible(envelopeButton);
 
     envelopeButton.setToggleState(true, juce::dontSendNotification);
@@ -303,13 +305,15 @@ void AudioPluginAudioProcessorEditor::resized()
 
     //Envelope Follower Drawings----------------------------------------------------------------------------------------
 
-    envelopeButton.setBounds(getWidth() / 2 - 15, getHeight() / 5 * 4 - 25, 30, 30);
+    envelopeButton.setBounds(getWidth() / 2 - 12, getHeight() - 55, 30, 30);
 
     envAttackSlider.setBounds(200, getHeight() / 5 * 4, 80, 80);
     envReleaseSlider.setBounds(320, getHeight() / 5 * 4, 80, 80);
+    envDynamixSlider.setBounds(260, getHeight() / 5 * 4 - 60, 80, 80);
 
     envAttackLabel.setBounds(envAttackSlider.getX(), envAttackSlider.getBottom() - 10, envAttackSlider.getWidth(), 18);
     envReleaseLabel.setBounds(envReleaseSlider.getX(), envReleaseSlider.getBottom() - 10, envReleaseSlider.getWidth(), 18);
+    envDynamixLabel.setBounds(envDynamixSlider.getX(), envDynamixSlider.getBottom() - 10, envDynamixSlider.getWidth(), 18);
 
     /*//Filter Drawings---------------------------------------------------------------------------------------------------
      filterTypeButton.setBounds(getWidth() / 5 * 4 - 40, getHeight() / 5 - 70, 80, 30);

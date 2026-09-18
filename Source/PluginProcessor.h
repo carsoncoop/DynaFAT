@@ -64,6 +64,7 @@ public:
     //Envelope Follower
     juce::SmoothedValue<float> smoothedEnvAttack;
     juce::SmoothedValue<float> smoothedEnvRelease;
+    juce::SmoothedValue<float> smoothedEnvDynamix;
 
     //Compressor controls (loaded for use, not yet connected to DSP)
     juce::SmoothedValue<float> smoothedCompThreshHigh;
