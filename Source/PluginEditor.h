@@ -78,6 +78,12 @@ private:
     juce::Label envReleaseLabel{"envReleaseLabel", "Release"};
     juce::Label envDynamixLabel{"envDynamixLabel", "DynaMix"};
 
+    //General
+    juce::Slider masterGainSlider;
+    juce::AudioProcessorValueTreeState::SliderAttachment masterGainSliderAttachment;
+
+    juce::Label masterGainLabel{"masterGain", "Master Vol."};
+
     //Filter
     /*juce::TextButton filterTypeButton;
     juce::ToggleButton preButton;

@@ -65,6 +65,9 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
         smoothedDrive.getCurrentValue(), smoothedThresh.getCurrentValue(),
         smoothedMix.getCurrentValue(), smoothedOutput.getCurrentValue());
 
+    //General preparation-----------------------------------------------------------------------------------------------
+    prepareSmoothed(smoothedMasterGain, "masterDrive");
+
     //Filter preparation------------------------------------------------------------------------------------------------
     /*filter.prepare();
     smoothedCutoff.reset(sampleRate, 0.01f);
@@ -128,6 +131,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedCompThreshLow.setTargetValue(state.getRawParameterValue("compThreshLow")->load());
     smoothedCompRatio.setTargetValue(state.getRawParameterValue("compRatio")->load());
 
+    //General-----------------------------------------------------------------------------------------------------------
+    smoothedMasterGain.setTargetValue(state.getRawParameterValue("masterGain")->load());
+    const float masterGain = juce::Decibels::decibelsToGain(smoothedMasterGain.getNextValue());
+
     /*if (filter.getActivation() && filter.getFilterOrder() == Pre) {
         smoothedCutoff.skip(buffer.getNumSamples());
         filter.setCutoff(smoothedCutoff.getCurrentValue());
@@ -166,7 +173,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
             //Distortion
             if (distortion.getDistortionType() == Downsample) {
-                float dryInput = input[sample];
+                const float dryInput = input[sample];
                 if (counter == 0) {
                     hold = input[sample];
                 }
@@ -202,6 +209,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 input[sample] = postEnvelopeFollower.useDynamix(input[sample],
                     postEnvSignal);
             }
+            input[sample] *= masterGain;
         }
     }
     // if (filter.getActivation() && filter.getFilterOrder() == Post) {
@@ -399,6 +407,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     addFloatParam("compRatio", "compRatio", juce::NormalisableRange<float>(1.0f, 10.0f), 3.0f, ":1");
     addFloatParam("compAttack", "compAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
     addFloatParam("compRelease", "compRelease", juce::NormalisableRange<float>(2.0f, 200.0f), 15.0f, " ms");
+    addFloatParam("masterGain", "masterGain", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f, " dB");
 
     return layout;
 }
