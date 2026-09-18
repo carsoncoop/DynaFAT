@@ -34,7 +34,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     compReleaseSliderAttachment(processorRef.getState(), "compRelease", compReleaseSlider),
     envelopeButtonAttachment(processorRef.getState(), "envelopeButton", envelopeButton),
     envAttackSliderAttachment(processorRef.getState(), "envAttack", envAttackSlider),
-    envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider)
+    envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider),
+    envDynamixSliderAttachment(processorRef.getState(), "envDynamix", envDynamixSlider),
+    masterGainSliderAttachment(processorRef.getState(), "masterGain", masterGainSlider)
 {
     auto setupLabel = [this] (juce::Label& label, const juce::Font& font = juce::Font(), const juce::String& text = {}) {
         label.setJustificationType(juce::Justification::centred);
@@ -147,6 +149,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     //Envelope Follower Parameters--------------------------------------------------------------------------------------
     setupKnob(envAttackSlider, envAttackLabel);
     setupKnob(envReleaseSlider, envReleaseLabel);
+    setupKnob(envDynamixSlider, envDynamixLabel);
     addAndMakeVisible(envelopeButton);
 
     //Initialize envelopeButton toggle
@@ -161,6 +164,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
             processorRef.getPostEnvelopeFollower().setActivation(false);
         }
     };
+
+    //General Parameters------------------------------------------------------------------------------------------------
+    setupKnob(masterGainSlider, masterGainLabel);
 
 
 
@@ -273,10 +279,10 @@ void AudioPluginAudioProcessorEditor::resized()
     mixLabel.setBounds(mixSlider.getX(), mixSlider.getBottom() - 10, mixSlider.getWidth(), 18);
 
     //Compressor Drawings-----------------------------------------------------------------------------------------------
-    compressorButton.setBounds(getWidth() / 5 * 4 - 30, getHeight() / 5 - 65, 60, 30);
+    compressorButton.setBounds(getWidth() / 5 * 4, getHeight() / 5 - 80, 60, 30);
 
-    compThreshHighSlider.setBounds(getWidth() / 5 * 4 + 35, getHeight() / 15 * 3 - 40, 60, 60);
-    compThreshLowSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 3 - 40, 60, 60);
+    compThreshHighSlider.setBounds(getWidth() / 5 * 4 + 14, getHeight() / 15 * 3 - 40, 60, 60);
+    compThreshLowSlider.setBounds(getWidth() / 5 * 4 - 54, getHeight() / 15 * 3 - 40, 60, 60);
     compRatioSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 5 - 40, 90, 90);
     compAttackSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 7 - 40, 90, 90);
     compReleaseSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 9 - 40, 90, 90);
@@ -289,13 +295,19 @@ void AudioPluginAudioProcessorEditor::resized()
 
     //Envelope Follower Drawings----------------------------------------------------------------------------------------
 
-    envelopeButton.setBounds(getWidth() / 2 - 15, getHeight() / 5 * 4 - 25, 30, 30);
+    envelopeButton.setBounds(getWidth() / 2 - 12, getHeight() - 55, 30, 30);
 
     envAttackSlider.setBounds(200, getHeight() / 5 * 4, 80, 80);
     envReleaseSlider.setBounds(320, getHeight() / 5 * 4, 80, 80);
+    envDynamixSlider.setBounds(260, getHeight() / 5 * 4 - 60, 80, 80);
 
     envAttackLabel.setBounds(envAttackSlider.getX(), envAttackSlider.getBottom() - 10, envAttackSlider.getWidth(), 18);
     envReleaseLabel.setBounds(envReleaseSlider.getX(), envReleaseSlider.getBottom() - 10, envReleaseSlider.getWidth(), 18);
+    envDynamixLabel.setBounds(envDynamixSlider.getX(), envDynamixSlider.getBottom() - 10, envDynamixSlider.getWidth(), 18);
+
+    //General Drawings--------------------------------------------------------------------------------------------------
+    masterGainSlider.setBounds(getWidth() - 100, getHeight() - 100, 80, 80);
+    masterGainLabel.setBounds(masterGainSlider.getX(), masterGainSlider.getBottom() - 10, masterGainSlider.getWidth(), 18);
 
     /*//Filter Drawings---------------------------------------------------------------------------------------------------
      filterTypeButton.setBounds(getWidth() / 5 * 4 - 40, getHeight() / 5 - 70, 80, 30);

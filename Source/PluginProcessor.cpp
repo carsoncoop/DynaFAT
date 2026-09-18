@@ -34,11 +34,14 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     //Envelop Follower Preparation--------------------------------------------------------------------------------------
     prepareSmoothed(smoothedEnvAttack, "envAttack");
     prepareSmoothed(smoothedEnvRelease, "envRelease");
+    prepareSmoothed(smoothedEnvDynamix, "envDynamix");
 
     preEnvelopeFollower.prepare(getSampleRate(), numProcessingChannels,
-        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue());
+        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue(),
+        smoothedEnvDynamix.getNextValue());
     postEnvelopeFollower.prepare(getSampleRate(), numProcessingChannels,
-        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue());
+        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue(),
+        smoothedEnvDynamix.getNextValue());
 
     //Compressor Preparation--------------------------------------------------------------------------------------------
     prepareSmoothed(smoothedCompThreshHigh, "compThreshHigh");
@@ -61,6 +64,9 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     distortion.prepare(getSampleRate(),
         smoothedDrive.getCurrentValue(), smoothedThresh.getCurrentValue(),
         smoothedMix.getCurrentValue(), smoothedOutput.getCurrentValue());
+
+    //General preparation-----------------------------------------------------------------------------------------------
+    prepareSmoothed(smoothedMasterGain, "masterDrive");
 
     //Filter preparation------------------------------------------------------------------------------------------------
     /*filter.prepare();
@@ -104,6 +110,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     //Envelope Follower-------------------------------------------------------------------------------------------------
     smoothedEnvAttack.setTargetValue(state.getRawParameterValue("envAttack")->load());
     smoothedEnvRelease.setTargetValue(state.getRawParameterValue("envRelease")->load());
+    smoothedEnvDynamix.setTargetValue(state.getRawParameterValue("envDynamix")->load());
 
     //Distortion--------------------------------------------------------------------------------------------------------
     smoothedDrive.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("drive")->load()));
@@ -123,6 +130,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedCompThreshHigh.setTargetValue(state.getRawParameterValue("compThreshHigh")->load());
     smoothedCompThreshLow.setTargetValue(state.getRawParameterValue("compThreshLow")->load());
     smoothedCompRatio.setTargetValue(state.getRawParameterValue("compRatio")->load());
+
+    //General-----------------------------------------------------------------------------------------------------------
+    smoothedMasterGain.setTargetValue(state.getRawParameterValue("masterGain")->load());
+    const float masterGain = juce::Decibels::decibelsToGain(smoothedMasterGain.getNextValue());
 
     /*if (filter.getActivation() && filter.getFilterOrder() == Pre) {
         smoothedCutoff.skip(buffer.getNumSamples());
@@ -147,6 +158,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         preEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
         postEnvelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
         postEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
+        postEnvelopeFollower.setEnvDynamix(smoothedEnvDynamix.getNextValue());
 
         compressor.setEnvAttack(smoothedCompAttack.getNextValue());
         compressor.setEnvRelease(smoothedCompRelease.getNextValue());
@@ -157,10 +169,11 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         //Channel processing
         for (int channel = 0; channel < totalNumInputChannels; ++channel) {
             auto* input = buffer.getWritePointer(channel);
-            preEnvelopeFollower.followEnv(input[sample], channel);
+            if (postEnvelopeFollower.getActivation()) {preEnvelopeFollower.followEnv(input[sample], channel);}
+
             //Distortion
             if (distortion.getDistortionType() == Downsample) {
-                float dryInput = input[sample];
+                const float dryInput = input[sample];
                 if (counter == 0) {
                     hold = input[sample];
                 }
@@ -183,11 +196,20 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             }
 
             //Post processing envelope
-            postEnvelopeFollower.followEnv(input[sample], channel);
+
             //*Gain match goes here*
             if (postEnvelopeFollower.getActivation() == true) {
-                input[sample] *= postEnvelopeFollower.computeCorrectionGain(preEnvelopeFollower.getEnvPerChannel()[channel], channel);
+                postEnvelopeFollower.followEnv(input[sample], channel);
+
+                //Use correction gain in envelope follower
+                const float postEnvSignal = input[sample] *
+                    postEnvelopeFollower.computeCorrectionGain(preEnvelopeFollower.getEnvPerChannel()[channel], channel);
+
+                //Use Dynamix for envelope follower
+                input[sample] = postEnvelopeFollower.useDynamix(input[sample],
+                    postEnvSignal);
             }
+            input[sample] *= masterGain;
         }
     }
     // if (filter.getActivation() && filter.getFilterOrder() == Post) {
@@ -388,11 +410,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     //addFloatParam("resonance", "resonance", juce::NormalisableRange<float>(0.01f, 6.0f), 0.7f, "");
     addFloatParam("envAttack", "envAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
     addFloatParam("envRelease", "envRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
+    addFloatParam("envDynamix", "envDynamix", juce::NormalisableRange<float>(0.0f, 100.0f), 100.0f, " %");
     addFloatParam("compThreshHigh", "compThreshHigh", juce::NormalisableRange<float>(-36.0f, 0.0f), -6.0f, " dB");
     addFloatParam("compThreshLow", "compThreshLow", juce::NormalisableRange<float>(-36.0f, 0.0f), -12.0f, " dB");
     addFloatParam("compRatio", "compRatio", juce::NormalisableRange<float>(1.0f, 10.0f), 3.0f, ":1");
     addFloatParam("compAttack", "compAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
     addFloatParam("compRelease", "compRelease", juce::NormalisableRange<float>(2.0f, 200.0f), 15.0f, " ms");
+    addFloatParam("masterGain", "masterGain", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f, " dB");
 
     addChoiceParam("algButton", "algButton", {"Soft Clip", "Hard Clip", "Foldback", "Downsample"}, 0);
     addBoolParam("compressorButton", "compressorButton", true);

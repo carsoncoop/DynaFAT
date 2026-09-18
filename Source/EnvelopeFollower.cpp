@@ -3,7 +3,7 @@
 #include <algorithm>
 
 void EnvelopeFollower::prepare(const float sampleRate_, const unsigned int numChannels_,
-    const float envAttackMs_, const float envReleaseMs_) {
+    const float envAttackMs_, const float envReleaseMs_, const float envDynamix_) {
 
     sampleRate = sampleRate_;
     numChannels = std::max(2u, numChannels_);
@@ -12,6 +12,7 @@ void EnvelopeFollower::prepare(const float sampleRate_, const unsigned int numCh
 
     envAttackCoeff = 1.0f - std::exp(-1.0f / (envAttackMs_ * 0.001f * sampleRate));
     envReleaseCoeff = 1.0f - std::exp(-1.0f / (envReleaseMs_ * 0.001f * sampleRate));
+    envDynamix = envDynamix_;
 }
 
 void EnvelopeFollower::setEnvAttack(const float envAttackMs_) {
@@ -48,5 +49,10 @@ float EnvelopeFollower::computeCorrectionGain(const float preSampleEnv, const in
     return rawGainLinear;
     //This implementation seems to work great without smoothing on the gain. Should test to be sure.
     //It would be cool if I could find out how to compute gain correction AFTER this point to emulate the same perceived loudness of the post-processed signal, with the dynamics preserver on.
+}
+
+float EnvelopeFollower::useDynamix(const float preSampleEnv, const float postSampleEnv) const {
+    //Computes the mix
+    return preSampleEnv * (1.0f - envDynamix / 100) + (envDynamix / 100) * postSampleEnv;
 }
 

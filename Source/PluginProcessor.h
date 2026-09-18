@@ -64,13 +64,17 @@ public:
     //Envelope Follower
     juce::SmoothedValue<float> smoothedEnvAttack;
     juce::SmoothedValue<float> smoothedEnvRelease;
+    juce::SmoothedValue<float> smoothedEnvDynamix;
 
-    //Compressor controls (loaded for use, not yet connected to DSP)
+    //Compressor controls
     juce::SmoothedValue<float> smoothedCompThreshHigh;
     juce::SmoothedValue<float> smoothedCompThreshLow;
     juce::SmoothedValue<float> smoothedCompRatio;
     juce::SmoothedValue<float> smoothedCompAttack;
     juce::SmoothedValue<float> smoothedCompRelease;
+
+    //General parameters
+    juce::SmoothedValue<float> smoothedMasterGain;
 
     Distortion& getDistortion() {return distortion;}
     EnvelopeFollower& getPreEnvelopeFollower() {return preEnvelopeFollower;}

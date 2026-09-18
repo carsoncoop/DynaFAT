@@ -9,13 +9,14 @@ class EnvelopeFollower {
 
     float envAttackCoeff = 0.0f;
     float envReleaseCoeff = 0.0f;
+    float envDynamix = 100.0f;
     std::vector<float> envPerChannel;
 
     bool activated = true;
 
 
 public:
-    void prepare(float sampleRate_, unsigned int numChannels_, float envAttackMs_, float envReleaseMs_);
+    void prepare(float sampleRate_, unsigned int numChannels_, float envAttackMs_, float envReleaseMs_, float envDynamix_);
 
     std::vector<float>& getEnvPerChannel() { return envPerChannel; }
 
@@ -26,8 +27,12 @@ public:
     void setEnvAttack(float envAttackMs_);
     void setEnvRelease(float envReleaseMs_);
 
+    void setEnvDynamix(const float envDynamix_) {envDynamix = envDynamix_;}
+
     void followEnv (float inputSample, int channelIndex);
 
     // Compute the correction gain (returns linear multiplier)
     [[nodiscard]] float computeCorrectionGain (float preSampleEnv, int channelIndex) const;
+
+    [[nodiscard]] float useDynamix(float preSampleEnv, float postSampleEnv) const;
 };
