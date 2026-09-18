@@ -133,7 +133,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     //General-----------------------------------------------------------------------------------------------------------
     smoothedMasterGain.setTargetValue(state.getRawParameterValue("masterGain")->load());
-    const float masterGain = juce::Decibels::decibelsToGain(smoothedMasterGain.getNextValue());
 
     /*if (filter.getActivation() && filter.getFilterOrder() == Pre) {
         smoothedCutoff.skip(buffer.getNumSamples());
@@ -148,6 +147,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     float counter = 0;
 
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
+        // compute master gain for this sample (smoothed in dB then converted to linear)
+        const float masterGain = juce::Decibels::decibelsToGain(smoothedMasterGain.getNextValue());
         //Assign parameters to class variables
         distortion.setDrive(smoothedDrive.getNextValue());
         distortion.setThresh(smoothedThresh.getNextValue());
