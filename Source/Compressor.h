@@ -4,7 +4,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 class Compressor {
-    float sampleRate = 44100.0f;
+    double sampleRate = 44100.0f;
     unsigned int numChannels = 2;
 
     float envAttackCoeff = 0.0f;
@@ -19,9 +19,16 @@ class Compressor {
 
     bool activated = true;
 
+    //Band splitting (mid band is created later)
+    juce::dsp::LinkwitzRileyFilter<float> lowCrossoverWide;
+    juce::dsp::LinkwitzRileyFilter<float> highCrossoverWide;
+    juce::dsp::LinkwitzRileyFilter<float> lowCrossoverNarrow;
+    juce::dsp::LinkwitzRileyFilter<float> highCrossoverNarrow;
+
+    std::vector<juce::dsp::LinkwitzRileyFilter<float>> crossoverVec;
 
 public:
-    void prepare(float sampleRate_, unsigned int numChannels_, float envAttackMs_, float envReleaseMs_,
+    void prepare(const juce::dsp::ProcessSpec& spec, float envAttackMs_, float envReleaseMs_,
         float ratio_, float thresh_dB_high_, float thresh_dB_low_);
 
     std::vector<float>& getEnvPerChannel() { return envPerChannel; }

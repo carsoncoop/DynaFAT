@@ -33,6 +33,6 @@ public:
     void setMix(float mix_);
     void setOutput(float output_);
     void setDistortionType(DistortionType type);
-    void prepare(float sampleRate_, float drive_, float thresh_, float mix_, float output_);
+    void prepare(double sampleRate_, float drive_, float thresh_, float mix_, float output_);
     [[nodiscard]] float process(float inputSample) const;
 };

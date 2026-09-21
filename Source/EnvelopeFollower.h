@@ -4,7 +4,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 class EnvelopeFollower {
-    float sampleRate = 44100.0f;
+    double sampleRate = 44100.0f;
     unsigned int numChannels = 2;
 
     float envAttackCoeff = 0.0f;
@@ -16,7 +16,7 @@ class EnvelopeFollower {
 
 
 public:
-    void prepare(float sampleRate_, unsigned int numChannels_, float envAttackMs_, float envReleaseMs_, float envDynamix_);
+    void prepare(const juce::dsp::ProcessSpec& spec, float envAttackMs_, float envReleaseMs_, float envDynamix_);
 
     std::vector<float>& getEnvPerChannel() { return envPerChannel; }
 

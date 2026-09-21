@@ -10,6 +10,7 @@
 
 void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    //May not need a spec
     juce::dsp::ProcessSpec spec{};
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
@@ -36,12 +37,10 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     prepareSmoothed(smoothedEnvRelease, "envRelease");
     prepareSmoothed(smoothedEnvDynamix, "envDynamix");
 
-    preEnvelopeFollower.prepare(getSampleRate(), numProcessingChannels,
-        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue(),
-        smoothedEnvDynamix.getNextValue());
-    postEnvelopeFollower.prepare(getSampleRate(), numProcessingChannels,
-        smoothedEnvAttack.getCurrentValue(), smoothedEnvRelease.getCurrentValue(),
-        smoothedEnvDynamix.getNextValue());
+    preEnvelopeFollower.prepare(spec, smoothedEnvAttack.getCurrentValue(),
+        smoothedEnvRelease.getCurrentValue(), smoothedEnvDynamix.getNextValue());
+    postEnvelopeFollower.prepare(spec, smoothedEnvAttack.getCurrentValue(),
+        smoothedEnvRelease.getCurrentValue(), smoothedEnvDynamix.getNextValue());
 
     //Compressor Preparation--------------------------------------------------------------------------------------------
     prepareSmoothed(smoothedCompThreshHigh, "compThreshHigh");
@@ -50,7 +49,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     prepareSmoothed(smoothedCompAttack, "compAttack");
     prepareSmoothed(smoothedCompRelease, "compRelease");
 
-    compressor.prepare(getSampleRate(), numProcessingChannels,smoothedCompAttack.getCurrentValue(),
+    compressor.prepare(spec,smoothedCompAttack.getCurrentValue(),
         smoothedCompRelease.getCurrentValue(), smoothedCompRatio.getCurrentValue(),
         smoothedCompThreshHigh.getCurrentValue(), smoothedCompThreshLow.getCurrentValue()
         );
@@ -74,20 +73,6 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     smoothedReso.reset(sampleRate, 0.01f);
     smoothedCutoff.setTargetValue(state.getRawParameterValue("cutoff")->load());
     smoothedReso.setTargetValue(state.getRawParameterValue("resonance")->load());*/
-
-    //Multiband Preparation---------------------------------------------------------------------------------------------
-    lowCrossoverWide.prepare(spec);
-    highCrossoverWide.prepare(spec);
-    lowCrossoverNarrow.prepare(spec);
-    highCrossoverNarrow.prepare(spec);
-    lowCrossoverWide.setType(juce::dsp::LinkwitzRileyFilter<float>::Type::lowpass);
-    highCrossoverWide.setType(juce::dsp::LinkwitzRileyFilter<float>::Type::highpass);
-    lowCrossoverNarrow.setType(juce::dsp::LinkwitzRileyFilter<float>::Type::lowpass);
-    highCrossoverNarrow.setType(juce::dsp::LinkwitzRileyFilter<float>::Type::highpass);
-    lowCrossoverWide.setCutoffFrequency(120.0f);
-    highCrossoverWide.setCutoffFrequency(120.0f);
-    lowCrossoverNarrow.setCutoffFrequency(2500.0f);
-    highCrossoverNarrow.setCutoffFrequency(2500.0f);
 
 
     //Visualizer--------------------------------------------------------------------------------------------------------

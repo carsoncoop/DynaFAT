@@ -94,10 +94,4 @@ private:
     Compressor compressor;
     Filter filter;
 
-    //Band splitting (mids are created later)
-    juce::dsp::LinkwitzRileyFilter<float> lowCrossoverWide;
-    juce::dsp::LinkwitzRileyFilter<float> highCrossoverWide;
-    juce::dsp::LinkwitzRileyFilter<float> lowCrossoverNarrow;
-    juce::dsp::LinkwitzRileyFilter<float> highCrossoverNarrow;
-
 };

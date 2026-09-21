@@ -1,13 +1,14 @@
 #include "Compressor.h"
 #include <cmath>
 #include <algorithm>
+#include "juce_audio_formats/format/juce_BufferingAudioFormatReader.h"
 
-void Compressor::prepare(const float sampleRate_, const unsigned int numChannels_,
-    const float envAttackMs_, const float envReleaseMs_,
-    const float ratio_, const float thresh_dB_high_, const float thresh_dB_low_) {
+void Compressor::prepare(const juce::dsp::ProcessSpec& spec,
+                         const float envAttackMs_, const float envReleaseMs_,
+                         const float ratio_, const float thresh_dB_high_, const float thresh_dB_low_) {
 
-    sampleRate = sampleRate_;
-    numChannels = std::max(2u, numChannels_);
+    sampleRate = spec.sampleRate;
+    numChannels = spec.numChannels;
 
     envPerChannel.assign(numChannels, 1e-6f);
     smoothedGainDbPerChannel.assign(numChannels, 0.0f);
@@ -18,6 +19,24 @@ void Compressor::prepare(const float sampleRate_, const unsigned int numChannels
     ratio = ratio_;
     thresh_dB_high = thresh_dB_high_;
     thresh_dB_low = thresh_dB_low_;
+
+    //Multiband Preparation
+    lowCrossoverWide.prepare(spec);
+    highCrossoverWide.prepare(spec);
+    lowCrossoverNarrow.prepare(spec);
+    highCrossoverNarrow.prepare(spec);
+    lowCrossoverWide.setType(juce::dsp::LinkwitzRileyFilter<float>::Type::lowpass);
+    highCrossoverWide.setType(juce::dsp::LinkwitzRileyFilter<float>::Type::highpass);
+    lowCrossoverNarrow.setType(juce::dsp::LinkwitzRileyFilter<float>::Type::lowpass);
+    highCrossoverNarrow.setType(juce::dsp::LinkwitzRileyFilter<float>::Type::highpass);
+    //Can make frequency ranges adjustable later
+    lowCrossoverWide.setCutoffFrequency(120.0f);
+    highCrossoverWide.setCutoffFrequency(120.0f);
+    lowCrossoverNarrow.setCutoffFrequency(2500.0f);
+    highCrossoverNarrow.setCutoffFrequency(2500.0f);
+
+    //Will have to do some stuff to isolate the middle band
+    crossoverVec = {lowCrossoverWide, lowCrossoverNarrow, highCrossoverNarrow};
 }
 
 void Compressor::setEnvAttack(const float envAttackMs_) {
@@ -42,15 +61,18 @@ void Compressor::setThreshLow(const float thresh_dB_low_) {
 
 void Compressor::followEnv (const float inputSample, const int channelIndex) {
 
-    const float rectified = std::abs(inputSample);
-    float env = envPerChannel[channelIndex];
-    if (rectified > env) {
-        env += (rectified - env) * envAttackCoeff;
+    for (auto& band: crossoverVec) {
+        const float rectified = std::abs(inputSample);
+        float env = envPerChannel[channelIndex];
+        if (rectified > env) {
+            env += (rectified - env) * envAttackCoeff;
+        }
+        else {
+            env += (rectified - env) * envReleaseCoeff;
+        }
+        envPerChannel[channelIndex] = env;
     }
-    else {
-        env += (rectified - env) * envReleaseCoeff;
-    }
-    envPerChannel[channelIndex] = env;
+
 }
 
 float Compressor::computeGainChange(const int channelIndex) {

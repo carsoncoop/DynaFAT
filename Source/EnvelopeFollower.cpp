@@ -2,11 +2,11 @@
 #include <cmath>
 #include <algorithm>
 
-void EnvelopeFollower::prepare(const float sampleRate_, const unsigned int numChannels_,
+void EnvelopeFollower::prepare(const juce::dsp::ProcessSpec& spec,
     const float envAttackMs_, const float envReleaseMs_, const float envDynamix_) {
 
-    sampleRate = sampleRate_;
-    numChannels = std::max(2u, numChannels_);
+    sampleRate = spec.sampleRate;
+    numChannels = spec.numChannels;
 
     envPerChannel.assign(numChannels, 1e-6f);
 

@@ -47,7 +47,7 @@ void Distortion::setDistortionType(DistortionType type) {
     distortionAlg = type;
 }
 
-void Distortion::prepare(const float sampleRate_, const float drive_, const float thresh_, const float mix_, const float output_) {
+void Distortion::prepare(const double sampleRate_, const float drive_, const float thresh_, const float mix_, const float output_) {
     sampleRate = sampleRate_;
     drive = drive_;
     thresh = thresh_;
