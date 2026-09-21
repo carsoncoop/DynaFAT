@@ -27,8 +27,8 @@ Known bugs:
 - Compressing even in dead zone.
 
 Current To-Do List:
-- Split bands and compress separately like OTT
-- Once all 3 bands are being compressed. Figure out what OTT is doing uniquely for signature sound
+- For the rest of the band splitting, write functions that take place per channel, that way CPU time is reduced
+  - Envelopes need to be followed for every channel, and every band
 
 Effect Class Layout:
 - Member variables store state of parameters through setter functions

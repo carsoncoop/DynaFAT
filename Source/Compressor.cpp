@@ -1,7 +1,6 @@
 #include "Compressor.h"
 #include <cmath>
 #include <algorithm>
-#include "juce_audio_formats/format/juce_BufferingAudioFormatReader.h"
 
 void Compressor::prepare(const juce::dsp::ProcessSpec& spec,
                          const float envAttackMs_, const float envReleaseMs_,
@@ -20,7 +19,7 @@ void Compressor::prepare(const juce::dsp::ProcessSpec& spec,
     thresh_dB_high = thresh_dB_high_;
     thresh_dB_low = thresh_dB_low_;
 
-    //Multiband Preparation
+    //Linkwitz-Riley
     lowCrossoverWide.prepare(spec);
     highCrossoverWide.prepare(spec);
     lowCrossoverNarrow.prepare(spec);
@@ -35,8 +34,9 @@ void Compressor::prepare(const juce::dsp::ProcessSpec& spec,
     lowCrossoverNarrow.setCutoffFrequency(2500.0f);
     highCrossoverNarrow.setCutoffFrequency(2500.0f);
 
-    //Will have to do some stuff to isolate the middle band
-    crossoverVec = {lowCrossoverWide, lowCrossoverNarrow, highCrossoverNarrow};
+    // Allocate one reusable set of buffers per block.
+    for (auto& bandBuffer : bandBuffers)
+        bandBuffer.setSize(static_cast<int> (spec.numChannels), static_cast<int> (spec.maximumBlockSize));
 }
 
 void Compressor::setEnvAttack(const float envAttackMs_) {
@@ -60,19 +60,15 @@ void Compressor::setThreshLow(const float thresh_dB_low_) {
 }
 
 void Compressor::followEnv (const float inputSample, const int channelIndex) {
-
-    for (auto& band: crossoverVec) {
-        const float rectified = std::abs(inputSample);
-        float env = envPerChannel[channelIndex];
-        if (rectified > env) {
-            env += (rectified - env) * envAttackCoeff;
-        }
-        else {
-            env += (rectified - env) * envReleaseCoeff;
-        }
-        envPerChannel[channelIndex] = env;
+    const float rectified = std::abs(inputSample);
+    float env = envPerChannel[channelIndex];
+    if (rectified > env) {
+        env += (rectified - env) * envAttackCoeff;
     }
-
+    else {
+        env += (rectified - env) * envReleaseCoeff;
+    }
+    envPerChannel[channelIndex] = env;
 }
 
 float Compressor::computeGainChange(const int channelIndex) {
@@ -97,7 +93,7 @@ float Compressor::computeGainChange(const int channelIndex) {
 
     return juce::Decibels::decibelsToGain(desiredGain_dB);
 
-    // Smooth the gain in dB. Not sure if it is necessary for now.
+    // Smooth the gain in dB before converting back to linear.
     float& currentGainDb = smoothedGainDbPerChannel[channelIndex];
     const float coeff = (desiredGain_dB < currentGainDb) ? envAttackCoeff : envReleaseCoeff;
     currentGainDb += coeff * (desiredGain_dB - currentGainDb);
@@ -106,3 +102,13 @@ float Compressor::computeGainChange(const int channelIndex) {
     return juce::Decibels::decibelsToGain(currentGainDb);
 }
 
+void Compressor::separateBufferBands(const juce::AudioBuffer<float>& buffer) {
+    bandBuffers[lowBand].makeCopyOf(buffer);
+    bandBuffers[midBand].makeCopyOf(buffer);
+    bandBuffers[highBand].makeCopyOf(buffer);
+}
+
+void Compressor::sendBandsToBuffer(juce::AudioBuffer<float>& buffer) {
+    const auto numChannels = buffer.getNumChannels();
+    const auto numSamples = buffer.getNumSamples();
+}

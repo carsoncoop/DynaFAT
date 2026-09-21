@@ -1,5 +1,6 @@
 //Use followEnv on pre- and post-sample. Then, processedSample *= computeCorrectionGain(...)
 #pragma once
+#include <array>
 #include <vector>
 #include <juce_dsp/juce_dsp.h>
 
@@ -19,13 +20,19 @@ class Compressor {
 
     bool activated = true;
 
-    //Band splitting (mid band is created later)
+    //Band splitting (middle band is created later)
     juce::dsp::LinkwitzRileyFilter<float> lowCrossoverWide;
     juce::dsp::LinkwitzRileyFilter<float> highCrossoverWide;
     juce::dsp::LinkwitzRileyFilter<float> lowCrossoverNarrow;
     juce::dsp::LinkwitzRileyFilter<float> highCrossoverNarrow;
 
-    std::vector<juce::dsp::LinkwitzRileyFilter<float>> crossoverVec;
+    enum BandIndex {
+        lowBand = 0,
+        midBand = 1,
+        highBand = 2
+    };
+
+    std::array<juce::AudioBuffer<float>, 3> bandBuffers;
 
 public:
     void prepare(const juce::dsp::ProcessSpec& spec, float envAttackMs_, float envReleaseMs_,
@@ -50,4 +57,10 @@ public:
     // Compute the correction gain (returns linear multiplier)
     //Do math in dB
     [[nodiscard]] float computeGainChange (int channelIndex);
+
+    //This is called each block, as whole buffers are separated at a time
+    void separateBufferBands(const juce::AudioBuffer<float>& buffer);
+
+    //Called at the end of process block, to combine 3 bands into buffer
+    void sendBandsToBuffer(juce::AudioBuffer<float>& buffer);
 };
