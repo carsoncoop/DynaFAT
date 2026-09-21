@@ -27,9 +27,8 @@ Known bugs:
 - Compressing even in dead zone.
 
 Current To-Do List:
-- Troubleshoot one-band, downward compressor clicks
-- Fix followEnv for the compressor class. It must be different from the standalone envelope follower for attack/release to function properly.
-- Incorporate knee into downward compression
+- Split bands and compress separately like OTT
+- Once all 3 bands are being compressed. Figure out what OTT is doing uniquely for signature sound
 
 Effect Class Layout:
 - Member variables store state of parameters through setter functions
