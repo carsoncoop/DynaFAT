@@ -15,22 +15,20 @@ Goals:
 Future Features:
 - Adjustable curve of envelope follower, allowing for a sharp J-curve (sharp vs. shallow fall off)
 - Allow user to save and load presets
+- "Makeup Gain" button next to master volume that will set it automatically
 
 Future Knobs:
-- Envelope Follower:
-  - Mix/"Dynamix"
 - Compressor
   - Input gain
-- Master
-  - Master gain
+
 
 Known bugs:
 - Alg options set to SoftClip whenever menu is closed.
-- Slight click artifact on upward compression (only?). Maybe a soft knee would help.
 - Compressing even in dead zone.
 
 Current To-Do List:
-- Fix followEnv for the compressor class. It must be different than the standalone envelope follower for attack/release to function properly.
+- Troubleshoot one-band, downward compressor clicks
+- Fix followEnv for the compressor class. It must be different from the standalone envelope follower for attack/release to function properly.
 - Incorporate knee into downward compression
 
 Effect Class Layout:
