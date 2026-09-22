@@ -29,10 +29,6 @@ void Compressor::prepare(const juce::dsp::ProcessSpec& spec,
     highCrossoverWide.setCutoffFrequency(120.0f);
     lowCrossoverNarrow.setCutoffFrequency(2500.0f);
     highCrossoverNarrow.setCutoffFrequency(2500.0f);
-
-    // Allocate one reusable set of buffers per block.
-    for (auto& bandBuffer : bandBuffers)
-        bandBuffer.setSize(static_cast<int> (spec.numChannels), static_cast<int> (spec.maximumBlockSize));
 }
 
 void Compressor::setEnvAttack(const float envAttackMs_) {
@@ -55,22 +51,22 @@ void Compressor::setThreshLow(const float thresh_dB_low_) {
     thresh_dB_low = thresh_dB_low_;
 }
 
-void Compressor::followEnv (const float inputSample, const int channelIndex) {
+void Compressor::followEnv (const float inputSample, const int channelIndex, const int bandIndex) {
     const float rectified = std::abs(inputSample);
-    float env = envChannelByBand[channelIndex];
+    float env = envChannelByBand[channelIndex * 8 + bandIndex];
     if (rectified > env) {
         env += (rectified - env) * envAttackCoeff;
     }
     else {
         env += (rectified - env) * envReleaseCoeff;
     }
-    envChannelByBand[channelIndex] = env;
+    envChannelByBand[channelIndex * 8 + bandIndex] = env;
 }
 
-float Compressor::computeGainChange(const int channelIndex) {
+float Compressor::computeGainChange(const int channelIndex, const int bandIndex) {
 
     constexpr float eps = 1e-6f;
-    const float envLinear = std::max(envChannelByBand[channelIndex], eps);
+    const float envLinear = std::max(envChannelByBand[channelIndex * 8 + bandIndex], eps);
     const float env_dB = juce::Decibels::gainToDecibels(envLinear);
 
     float desiredGain_dB = 0.0f;
@@ -89,6 +85,7 @@ float Compressor::computeGainChange(const int channelIndex) {
 
     return juce::Decibels::decibelsToGain(desiredGain_dB);
 
+    /*
     // Smooth the gain in dB before converting back to linear.
     float& currentGainDb = smoothedGainDbChannelByBand[channelIndex];
     const float coeff = (desiredGain_dB < currentGainDb) ? envAttackCoeff : envReleaseCoeff;
@@ -96,19 +93,31 @@ float Compressor::computeGainChange(const int channelIndex) {
 
     //Return linear gain (to multiply input sample)
     return juce::Decibels::decibelsToGain(currentGainDb);
+    */
+
 }
 
-void Compressor::separateBufferBands(const juce::AudioBuffer<float>& buffer) {
-    bandBuffers[lowBand].makeCopyOf(buffer);
-    bandBuffers[midBand].makeCopyOf(buffer);
-    bandBuffers[highBand].makeCopyOf(buffer);
-}
+float Compressor::processSample(float inputSample, int channelIndex) {
+    //Split into 3 bands per sample per channel
+    float lowSample = lowCrossoverWide.processSample(channelIndex, inputSample);
+    float upperRemainder = highCrossoverWide.processSample(channelIndex, inputSample);
 
-void Compressor::sendBandsToBuffer(juce::AudioBuffer<float>& buffer) {
-    const auto numChannels = buffer.getNumChannels();
-    const auto numSamples = buffer.getNumSamples();
-}
+    float midSample = lowCrossoverNarrow.processSample(channelIndex, upperRemainder);
+    float highSample = highCrossoverNarrow.processSample(channelIndex, upperRemainder);
 
-void Compressor::getBufferPointers(juce::AudioBuffer<float>& buffer) {
+    //Process each band compression per sample per channel
 
+    followEnv(lowSample, channelIndex, lowBand);
+    const float lowGain = computeGainChange(channelIndex, lowBand);
+    const float processedLow = lowSample * lowGain;
+
+    followEnv(midSample, channelIndex, midBand);
+    const float midGain = computeGainChange(channelIndex, midBand);
+    const float processedMid = midSample * midGain;
+
+    followEnv(highSample, channelIndex, highBand);
+    const float highGain = computeGainChange(channelIndex, highBand);
+    const float processedHigh = highSample * highGain;
+
+    return processedLow + processedMid + processedHigh;
 }

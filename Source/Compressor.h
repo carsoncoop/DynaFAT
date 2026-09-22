@@ -11,10 +11,10 @@ class Compressor {
     float envAttackCoeff = 0.0f;
     float envReleaseCoeff = 0.0f;
 
-    //2d arrays with ROWS = Channels, COLUMNS = Bands
-    //Arrays are initialized to the maximum possible size (8 channels, and 3 bands). Usually only 1 or 2 channels are used. This is the standard for dsp, as opposed to using a dynamic structure like vectors.
-    std::array<std::array<float, 8>, 3> envChannelByBand = {};
-    std::array<std::array<float, 8>, 3> smoothedGainDbChannelByBand = {};
+    //2d arrays flattened to 1d. To access elements: myArray[(channelNum * 8) + bandNum]
+    //Arrays are initialized to the maximum possible size (8 channels, and 3 bands). Usually only 1 or 2 channels are used.
+    std::array<float, 8 * 3> envChannelByBand = {};
+    std::array<float, 8 * 3> smoothedGainDbChannelByBand = {};
 
     float ratio = 1;
     float thresh_dB_high = 1;
@@ -34,13 +34,11 @@ class Compressor {
         highBand = 2
     };
 
-    std::array<juce::AudioBuffer<float>, 3> bandBuffers;
-
 public:
     void prepare(const juce::dsp::ProcessSpec& spec, float envAttackMs_, float envReleaseMs_,
         float ratio_, float thresh_dB_high_, float thresh_dB_low_);
 
-    std::array<std::array<float, 8>, 3> getEnvPerChannel() { return envChannelByBand; }
+    std::array<float, 8 * 3> getEnvPerChannel() const { return envChannelByBand; }
 
     void setActivation(const bool status) {activated = status;}
     bool getActivation() const {return activated;}
@@ -54,17 +52,11 @@ public:
     void setThreshHigh(float thresh_dB_high_);
     void setThreshLow(float thresh_dB_low_);
 
-    void followEnv (float inputSample, int channelIndex);
+    void followEnv (float inputSample, int channelIndex, int bandIndx);
 
     // Compute the correction gain (returns linear multiplier)
     //Do math in dB
-    [[nodiscard]] float computeGainChange (int channelIndex);
+    [[nodiscard]] float computeGainChange (int channelIndex, int bandIndex);
 
-    //This is called each block, as whole buffers are separated at a time
-    void separateBufferBands(const juce::AudioBuffer<float>& buffer);
-
-    //Called at the end of process block, to combine 3 bands into buffer
-    void sendBandsToBuffer(juce::AudioBuffer<float>& buffer);
-
-    void getBufferPointers(juce::AudioBuffer<float>& buffer);
+    float processSample(float inputSample, int channelIndex);
 };

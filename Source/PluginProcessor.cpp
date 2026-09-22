@@ -177,8 +177,11 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             }
             //Compression
             if (compressor.getActivation()) {
+                input[sample] = compressor.processSample(input[sample], channel);
+
+                /*
                 compressor.followEnv(input[sample], channel);
-                input[sample] *= compressor.computeGainChange(channel);
+                input[sample] *= compressor.computeGainChange(channel);*/
             }
 
             //Post processing envelope
@@ -198,6 +201,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             input[sample] *= masterGain;
         }
     }
+
     // if (filter.getActivation() && filter.getFilterOrder() == Post) {
     //     smoothedCutoff.skip(buffer.getNumSamples());
     //     filter.setCutoff(smoothedCutoff.getCurrentValue());
