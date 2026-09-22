@@ -1,5 +1,4 @@
 #include "Compressor.h"
-#include <cmath>
 #include <algorithm>
 
 void Compressor::prepare(const juce::dsp::ProcessSpec& spec,
@@ -8,9 +7,6 @@ void Compressor::prepare(const juce::dsp::ProcessSpec& spec,
 
     sampleRate = spec.sampleRate;
     numChannels = spec.numChannels;
-
-    envPerChannel.assign(numChannels, 1e-6f);
-    smoothedGainDbPerChannel.assign(numChannels, 0.0f);
 
     envAttackCoeff = 1.0f - std::exp(-1.0f / (envAttackMs_ * 0.001f * sampleRate));
     envReleaseCoeff = 1.0f - std::exp(-1.0f / (envReleaseMs_ * 0.001f * sampleRate));
@@ -61,20 +57,20 @@ void Compressor::setThreshLow(const float thresh_dB_low_) {
 
 void Compressor::followEnv (const float inputSample, const int channelIndex) {
     const float rectified = std::abs(inputSample);
-    float env = envPerChannel[channelIndex];
+    float env = envChannelByBand[channelIndex];
     if (rectified > env) {
         env += (rectified - env) * envAttackCoeff;
     }
     else {
         env += (rectified - env) * envReleaseCoeff;
     }
-    envPerChannel[channelIndex] = env;
+    envChannelByBand[channelIndex] = env;
 }
 
 float Compressor::computeGainChange(const int channelIndex) {
 
     constexpr float eps = 1e-6f;
-    const float envLinear = std::max(envPerChannel[channelIndex], eps);
+    const float envLinear = std::max(envChannelByBand[channelIndex], eps);
     const float env_dB = juce::Decibels::gainToDecibels(envLinear);
 
     float desiredGain_dB = 0.0f;
@@ -94,7 +90,7 @@ float Compressor::computeGainChange(const int channelIndex) {
     return juce::Decibels::decibelsToGain(desiredGain_dB);
 
     // Smooth the gain in dB before converting back to linear.
-    float& currentGainDb = smoothedGainDbPerChannel[channelIndex];
+    float& currentGainDb = smoothedGainDbChannelByBand[channelIndex];
     const float coeff = (desiredGain_dB < currentGainDb) ? envAttackCoeff : envReleaseCoeff;
     currentGainDb += coeff * (desiredGain_dB - currentGainDb);
 
@@ -111,4 +107,8 @@ void Compressor::separateBufferBands(const juce::AudioBuffer<float>& buffer) {
 void Compressor::sendBandsToBuffer(juce::AudioBuffer<float>& buffer) {
     const auto numChannels = buffer.getNumChannels();
     const auto numSamples = buffer.getNumSamples();
+}
+
+void Compressor::getBufferPointers(juce::AudioBuffer<float>& buffer) {
+
 }
