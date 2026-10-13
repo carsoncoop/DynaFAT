@@ -1,6 +1,8 @@
 # DynaFAT
 DynaFAT is a real time audio processing VST made for electronic music production. DynaFAT preserves dynamics while adding richness to bass synths through aggressive distortion, multiband compression, and envelope following.
 
+🎥 [Work In Progress Demo Video](https://www.youtube.com/watch?v=gI5iUk-rYCE)
+
 Requirements:
 - C++
 - CMake
