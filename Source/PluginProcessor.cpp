@@ -49,7 +49,7 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     prepareSmoothed(smoothedCompAttack, "compAttack");
     prepareSmoothed(smoothedCompRelease, "compRelease");
 
-    const int compressorPasses = juce::roundToInt(state.getRawParameterValue("compressorPasses")->load());
+    const int compressorPasses = state.getRawParameterValue("compressorPasses")->load();
 
     compressor.prepare(spec,smoothedCompAttack.getCurrentValue(),
         smoothedCompRelease.getCurrentValue(), smoothedCompRatio.getCurrentValue(),
@@ -57,19 +57,13 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
         compressorPasses
         );
 
+    distortion.prepare(getSampleRate(), juce::Decibels::decibelsToGain(state.getRawParameterValue("drive")->load()),
+        juce::Decibels::decibelsToGain(state.getRawParameterValue("thresh")->load()),
+        state.getRawParameterValue("mix")->load(),
+        juce::Decibels::decibelsToGain(state.getRawParameterValue("output")->load()),
+        juce::roundToInt(state.getRawParameterValue("distortionPasses")->load()));
 
 
-
-    //Distortion Preparation--------------------------------------------------------------------------------------------
-    prepareSmoothed(smoothedDrive, "drive");
-    prepareSmoothed(smoothedThresh, "thresh");
-    prepareSmoothed(smoothedOutput, "output");
-    prepareSmoothed(smoothedMix, "mix");
-
-    const int distortionPasses = juce::roundToInt(state.getRawParameterValue("distortionPasses")->load());
-    distortion.prepare(getSampleRate(),
-        smoothedDrive.getCurrentValue(), smoothedThresh.getCurrentValue(),
-        smoothedMix.getCurrentValue(), smoothedOutput.getCurrentValue(), distortionPasses);
 
     //General preparation-----------------------------------------------------------------------------------------------
     prepareSmoothed(smoothedMasterGain, "masterGain");
@@ -92,13 +86,13 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                               juce::MidiBuffer& midiMessages)
 {
     juce::ignoreUnused (midiMessages);
-
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
-
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
+
+
     //Envelope Follower-------------------------------------------------------------------------------------------------
     smoothedEnvAttack.setTargetValue(state.getRawParameterValue("envAttack")->load());
     smoothedEnvRelease.setTargetValue(state.getRawParameterValue("envRelease")->load());
@@ -110,11 +104,12 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     postEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
 
     //Distortion--------------------------------------------------------------------------------------------------------
-    smoothedDrive.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("drive")->load()));
-    smoothedThresh.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("thresh")->load()));
-    smoothedOutput.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("output")->load()));
-    smoothedMix.setTargetValue(state.getRawParameterValue("mix")->load());
+    distortion.setDrive(juce::Decibels::decibelsToGain(state.getRawParameterValue("drive")->load()));
+    distortion.setThresh(juce::Decibels::decibelsToGain(state.getRawParameterValue("thresh")->load()));
+    distortion.setOutput(juce::Decibels::decibelsToGain(state.getRawParameterValue("output")->load()));
+    distortion.setMix(state.getRawParameterValue("mix")->load());
     distortion.setNumPasses(juce::roundToInt(state.getRawParameterValue("distortionPasses")->load()));
+
 
     /*//Filter------------------------------------------------------------------------------------------------------------
     smoothedCutoff.setTargetValue(state.getRawParameterValue("cutoff")->load());
@@ -144,7 +139,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         filter.myProcess(juce::dsp::AudioBlock<float>(buffer));
     }*/
 
+    distortion.distProcess(buffer);
 
+
+    /*
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
         // compute master gain for this sample (smoothed in dB then converted to linear)
         const float masterGain = juce::Decibels::decibelsToGain(smoothedMasterGain.getNextValue());
@@ -198,6 +196,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             input[sample] *= masterGain;
         }
     }
+    */
 
     // if (filter.getActivation() && filter.getFilterOrder() == Post) {
     //     smoothedCutoff.skip(buffer.getNumSamples());

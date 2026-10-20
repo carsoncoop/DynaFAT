@@ -57,11 +57,6 @@ public:
     juce::AudioProcessorValueTreeState& getState() {return state;}
 
     juce::AudioBuffer<float> visualizerBuffer;
-    //Distortion
-    juce::SmoothedValue<float> smoothedDrive;
-    juce::SmoothedValue<float> smoothedThresh;
-    juce::SmoothedValue<float> smoothedOutput;
-    juce::SmoothedValue<float> smoothedMix;
 
     //Filter
     juce::SmoothedValue<float> smoothedCutoff;
@@ -71,13 +66,6 @@ public:
     juce::SmoothedValue<float> smoothedEnvAttack;
     juce::SmoothedValue<float> smoothedEnvRelease;
     juce::SmoothedValue<float> smoothedEnvDynamix;
-
-    //Compressor controls
-    juce::SmoothedValue<float> smoothedCompThreshHigh;
-    juce::SmoothedValue<float> smoothedCompThreshLow;
-    juce::SmoothedValue<float> smoothedCompRatio;
-    juce::SmoothedValue<float> smoothedCompAttack;
-    juce::SmoothedValue<float> smoothedCompRelease;
 
     //General parameters
     juce::SmoothedValue<float> smoothedMasterGain;

@@ -8,17 +8,16 @@ class Compressor {
     double sampleRate = 44100.0f;
     unsigned int numChannels = 2;
 
-    float envAttackCoeff = 0.0f;
-    float envReleaseCoeff = 0.0f;
-
     //2d arrays flattened to 1d. To access elements: myArray[(channelNum * 8) + bandNum]
     //Arrays are initialized to the maximum possible size (8 channels, and 3 bands). Usually only 1 or 2 channels are used.
     std::array<float, 8 * 3> envChannelByBand = {};
     std::array<float, 8 * 3> smoothedGainDbChannelByBand = {};
 
-    float ratio = 1;
-    float thresh_dB_high = 1;
-    float thresh_dB_low = 1;
+    juce::SmoothedValue<float> smoothedCompThreshHigh;
+    juce::SmoothedValue<float> smoothedCompThreshLow;
+    juce::SmoothedValue<float> smoothedCompRatio;
+    juce::SmoothedValue<float> smoothedCompAttack;
+    juce::SmoothedValue<float> smoothedCompRelease;
 
     bool activated = true;
 
