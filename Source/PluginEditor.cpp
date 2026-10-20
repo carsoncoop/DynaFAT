@@ -19,6 +19,7 @@ void AudioPluginAudioProcessorEditor::timerCallback()
 }
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p),
+    routingButtonAttachment(processorRef.getState(), "routingButton", routingButton),
     algButtonAttachment(processorRef.getState(), "algButton", algButton),
     satSliderAttachment(processorRef.getState(), "drive", satSlider),
     threshSliderAttachment(processorRef.getState(), "thresh", threshSlider),
@@ -71,7 +72,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     visual.setBufferSize(128);
     visual.setSamplesPerBlock(128);
     visual.setRepaintRate(144);
-    visual.setColours(background, juce::Colours::orangered);
+    visual.setColours(background, juce::Colours::deepskyblue);
     startTimerHz(60);
     addAndMakeVisible(visual);
 
@@ -107,20 +108,20 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
                 else if (result == 1) {
                     algButton.setButtonText("Soft Clip");
                     processorRef.getDistortion().setDistortionType(SoftClip);
-                    threshLabel.setText("Thresh (+dB)", juce::dontSendNotification);
-                    satLabel.setText("Drive (+dB)", juce::dontSendNotification);
+                    threshLabel.setText("Thresh", juce::dontSendNotification);
+                    satLabel.setText("Drive", juce::dontSendNotification);
                 }
                 else if (result == 2) {
                     algButton.setButtonText("Hard Clip");
                     processorRef.getDistortion().setDistortionType(HardClip);
-                    threshLabel.setText("Thresh (+dB)", juce::dontSendNotification);
-                    satLabel.setText("Drive (+dB)", juce::dontSendNotification);
+                    threshLabel.setText("Thresh", juce::dontSendNotification);
+                    satLabel.setText("Drive", juce::dontSendNotification);
                 }
                 else if (result == 3) {
                     algButton.setButtonText("Foldback");
                     processorRef.getDistortion().setDistortionType(Foldback);
-                    threshLabel.setText("Thresh (+dB)", juce::dontSendNotification);
-                    satLabel.setText("Drive (+dB)", juce::dontSendNotification);
+                    threshLabel.setText("Thresh", juce::dontSendNotification);
+                    satLabel.setText("Drive", juce::dontSendNotification);
                 }
                 else if (result == 4) {
                     algButton.setButtonText("Downsample");
@@ -181,6 +182,34 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     //General Parameters------------------------------------------------------------------------------------------------
     setupKnob(masterGainSlider, masterGainLabel);
+
+    //Initialize routingButton text
+    const juce::StringArray routingChoices { "Distortion -> Compression", "Compression -> Distortion"};
+    int idx1 = static_cast<int>(std::round(processorRef.getState().getRawParameterValue("routingButton")->load()));
+    routingButton.setButtonText(routingChoices[idx1]);
+
+    routingButton.onClick = [this]() {
+        juce::PopupMenu routingMenu;
+        routingMenu.addItem(1, "Distortion -> Compression");
+        routingMenu.addItem(2, "Compression -> Distortion");
+
+        routingMenu.showMenuAsync(juce::PopupMenu::Options(),
+            [this] (int result) {
+                if (result == 0) {//If no selection is made
+
+                }
+                else if (result == 1) {
+                    routingButton.setButtonText("Distortion -> Compression");
+                    processorRef.setRouting(DistFirst);
+                }
+                else if (result == 2) {
+                    routingButton.setButtonText("Compression -> Distortion");
+                    processorRef.setRouting(CompFirst);
+                }
+        });
+    };
+
+    addAndMakeVisible(routingButton);
 
 
 
@@ -270,62 +299,80 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
 
+    const auto midX = static_cast<float> (getWidth() / 2);
+    const auto lineY = static_cast<float> (getHeight() / 5 * 3 + 62);
+
+    g.setColour (juce::Colours::darkgrey);
+    g.drawLine (midX, 0.0f, midX, lineY, 1.0f);                                   // vertical divider
+    g.drawLine (0.0f, lineY, static_cast<float> (getWidth()), lineY, 1.0f);       // horizontal divider
+
+    const auto frame = visual.getBounds().expanded (4).toFloat();   // 4px padding around the waveform
+    g.setColour (juce::Colours::darkgrey);
+    g.drawRoundedRectangle (frame, 4.0f, 1.0f);
+
 }
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    visual.setBounds(0,550, 150 ,150);
-    distortionHeader.setBounds(getWidth() / 5 - 42,-40, 150 ,150);
-    compressionHeader.setBounds(getWidth() / 5 * 4 - 82,-40, 150 ,150);
-    envelopeHeader.setBounds(getWidth() / 2 - 75, getHeight() / 5 * 3, 150, 150);
+    const int centerX = getWidth() / 2;
+    const int distortionCenterX = getWidth() / 4;
+    const int compressionCenterX = getWidth() - distortionCenterX;
+
+    visual.setBounds(40,525, 120 ,120);
+    distortionHeader.setBounds(distortionCenterX - 75,-40, 150 ,150);
+    compressionHeader.setBounds(compressionCenterX - 75,-40, 150 ,150);
+    envelopeHeader.setBounds(centerX - 75, getHeight() / 5 * 3, 150, 150);
 
     //Distortion Drawings-----------------------------------------------------------------------------------------------
-    algButton.setBounds(getWidth() / 5 - 8, getHeight() / 5 - 80, 80, 30);
 
-    satSlider.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 3 - 40, 90, 90);
-    threshSlider.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 5 - 40, 90, 90);
-    outputSlider.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 7 - 40, 90, 90);
-    mixSlider.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 9 - 40, 90, 90);
-    distortionPassesSlider.setBounds(getWidth() / 5 - 95, getHeight() / 15 * 5 + 35, 60, 60);
+    algButton.setBounds(distortionCenterX - 40, getHeight() / 5 - 80, 80, 30);
+
+    satSlider.setBounds(distortionCenterX - 45, getHeight() / 15 * 3 - 40, 90, 90);
+    threshSlider.setBounds(distortionCenterX - 45, getHeight() / 15 * 5 - 40, 90, 90);
+    outputSlider.setBounds(distortionCenterX - 45, getHeight() / 15 * 7 - 40, 90, 90);
+    mixSlider.setBounds(distortionCenterX - 45, getHeight() / 15 * 9 - 40, 90, 90);
+    distortionPassesSlider.setBounds(distortionCenterX + 85, getHeight() / 15 * 9 - 10, 50, 50);
 
     satLabel.setBounds(satSlider.getX(), satSlider.getBottom() - 10, satSlider.getWidth(), 18);
     threshLabel.setBounds(threshSlider.getX(), threshSlider.getBottom() - 10, threshSlider.getWidth(), 18);
     outputLabel.setBounds(outputSlider.getX(), outputSlider.getBottom() - 10, outputSlider.getWidth(), 18);
     mixLabel.setBounds(mixSlider.getX(), mixSlider.getBottom() - 10, mixSlider.getWidth(), 18);
-    distortionPassesLabel.setBounds(distortionPassesSlider.getX() - 18, distortionPassesSlider.getBottom() - 15, distortionPassesSlider.getWidth(), 18);
+    distortionPassesLabel.setBounds(distortionPassesSlider.getX(), distortionPassesSlider.getBottom(), distortionPassesSlider.getWidth(), 18);
 
     //Compressor Drawings-----------------------------------------------------------------------------------------------
-    compressorButton.setBounds(getWidth() / 5 * 4 - 20, getHeight() / 5 - 80, 60, 30);
+    compressorButton.setBounds(compressionCenterX - 12, getHeight() / 5 - 80, 60, 30);
 
-    compThreshHighSlider.setBounds(getWidth() / 5 * 4 - 6, getHeight() / 15 * 3 - 40, 60, 60);
-    compThreshLowSlider.setBounds(getWidth() / 5 * 4 - 74, getHeight() / 15 * 3 - 40, 60, 60);
-    compRatioSlider.setBounds(getWidth() / 5 * 4 - 55, getHeight() / 15 * 5 - 40, 90, 90);
-    compAttackSlider.setBounds(getWidth() / 5 * 4 - 55, getHeight() / 15 * 7 - 40, 90, 90);
-    compReleaseSlider.setBounds(getWidth() / 5 * 4 - 55, getHeight() / 15 * 9 - 40, 90, 90);
-    compressorPassesSlider.setBounds(getWidth() / 5 * 4 + 50, getHeight() / 15 * 5 + 35, 60, 60);
+    compThreshLowSlider.setBounds(compressionCenterX - 64, getHeight() / 15 * 3 - 40, 60, 60);
+    compThreshHighSlider.setBounds(compressionCenterX + 4, getHeight() / 15 * 3 - 40, 60, 60);
+
+    compRatioSlider.setBounds(compressionCenterX - 45, getHeight() / 15 * 5 - 40, 90, 90);
+    compAttackSlider.setBounds(compressionCenterX - 45, getHeight() / 15 * 7 - 40, 90, 90);
+    compReleaseSlider.setBounds(compressionCenterX - 45, getHeight() / 15 * 9 - 40, 90, 90);
+    compressorPassesSlider.setBounds(compressionCenterX + 85, getHeight() / 15 * 9 - 10, 50, 50);
 
     compThreshHighLabel.setBounds(compThreshHighSlider.getX(), compThreshHighSlider.getBottom() - 10, compThreshHighSlider.getWidth(), 18);
     compThreshLowLabel.setBounds(compThreshLowSlider.getX(), compThreshLowSlider.getBottom() - 10, compThreshLowSlider.getWidth(), 18);
     compRatioLabel.setBounds(compRatioSlider.getX(), compRatioSlider.getBottom() - 10, compRatioSlider.getWidth(), 18);
     compAttackLabel.setBounds(compAttackSlider.getX(), compAttackSlider.getBottom() - 10, compAttackSlider.getWidth(), 18);
     compReleaseLabel.setBounds(compReleaseSlider.getX(), compReleaseSlider.getBottom() - 10, compReleaseSlider.getWidth(), 18);
-    compressorPassesLabel.setBounds(compressorPassesSlider.getX() - 18, compressorPassesSlider.getBottom() - 15, compressorPassesSlider.getWidth(), 18);
+    compressorPassesLabel.setBounds(compressorPassesSlider.getX(), compressorPassesSlider.getBottom(), compressorPassesSlider.getWidth(), 18);
 
     //Envelope Follower Drawings----------------------------------------------------------------------------------------
 
-    envelopeButton.setBounds(getWidth() / 2 - 12, getHeight() - 55, 30, 30);
+    envelopeButton.setBounds(centerX - 15, getHeight() - 55, 30, 30);   // was -12 (3px off-center)
 
-    envAttackSlider.setBounds(200, getHeight() / 5 * 4, 80, 80);
-    envReleaseSlider.setBounds(320, getHeight() / 5 * 4, 80, 80);
-    envDynamixSlider.setBounds(260, getHeight() / 5 * 4 - 60, 80, 80);
+    envDynamixSlider.setBounds(centerX - 40,  getHeight() / 5 * 4 - 60, 80, 80);
+    envAttackSlider.setBounds(centerX - 100,  getHeight() / 5 * 4, 80, 80);
+    envReleaseSlider.setBounds(centerX + 20,  getHeight() / 5 * 4, 80, 80);
 
     envAttackLabel.setBounds(envAttackSlider.getX(), envAttackSlider.getBottom() - 10, envAttackSlider.getWidth(), 18);
     envReleaseLabel.setBounds(envReleaseSlider.getX(), envReleaseSlider.getBottom() - 10, envReleaseSlider.getWidth(), 18);
     envDynamixLabel.setBounds(envDynamixSlider.getX(), envDynamixSlider.getBottom() - 10, envDynamixSlider.getWidth(), 18);
 
     //General Drawings--------------------------------------------------------------------------------------------------
-    masterGainSlider.setBounds(getWidth() - 100, getHeight() - 100, 80, 80);
+    masterGainSlider.setBounds(getWidth() - 70, getHeight() - 70, 60, 60);
     masterGainLabel.setBounds(masterGainSlider.getX(), masterGainSlider.getBottom() - 10, masterGainSlider.getWidth(), 18);
+    routingButton.setBounds(centerX - 40, 20, 80, 30);
 
     /*//Filter Drawings---------------------------------------------------------------------------------------------------
      filterTypeButton.setBounds(getWidth() / 5 * 4 - 40, getHeight() / 5 - 70, 80, 30);

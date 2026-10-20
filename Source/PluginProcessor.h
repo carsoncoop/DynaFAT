@@ -8,6 +8,10 @@
 #include "Filter.h"
 #include <vector>
 
+enum Routing {
+    DistFirst,
+    CompFirst
+};
 
 class AudioPluginAudioProcessor final : public juce::AudioProcessor
 {
@@ -47,6 +51,8 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+
+    void setRouting (const Routing routing_) {routing = routing_;}
 
     juce::AudioProcessorValueTreeState& getState() {return state;}
 
@@ -93,5 +99,7 @@ private:
     Distortion distortion;
     Compressor compressor;
     Filter filter;
+
+    Routing routing = DistFirst;
 
 };

@@ -39,3 +39,20 @@ public:
     void prepare(double sampleRate_, float drive_, float thresh_, float mix_, float output_, int passes_);
     [[nodiscard]] float process(float inputSample) const;
 };
+
+
+//Previous downsample implementation:
+/*
+ *const float dryInput = input[sample];
+if (counter == 0) {
+    hold = input[sample];
+}
+input[sample] = hold;
+counter += 0.5;
+if (counter >= static_cast<int>(juce::Decibels::gainToDecibels(distortion.getDrive()))) {
+    counter = 0;
+}
+input[sample] *= distortion.getOutput();
+float mix = distortion.getMix();
+input[sample] = dryInput * (1.0f - mix / 100) + (mix / 100) * input[sample];
+*/

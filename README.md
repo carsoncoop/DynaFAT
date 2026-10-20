@@ -8,23 +8,10 @@ Requirements:
 - CMake
 - JUCE framework
 
-Goals:
-- Implement multiband compression class
-- Reduce user controls to be concise while allowing for customizability
-- Optimize CPU performance in buffer processing
-- Uncomment filter implementation and turn it into a class like the other effects
-
 Future Features:
 - Adjustable curve of envelope follower, allowing for a sharp J-curve (sharp vs. shallow fall off)
 - Allow user to save and load presets
-- "Makeup Gain" button next to master volume that will set it automatically
 - "High quality" button that uses oversampling
-- "routing" button to swap order or distortion & compression
-
-Future Knobs:
-- Compressor
-    - Input gain
-
 
 Known bugs:
 - Alg options set to SoftClip whenever menu is closed.

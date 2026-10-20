@@ -136,10 +136,6 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         filter.myProcess(juce::dsp::AudioBlock<float>(buffer));
     }*/
 
-    //Used for sample & hold
-    float hold = 0;
-    float counter = 0;
-
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
         // compute master gain for this sample (smoothed in dB then converted to linear)
         const float masterGain = juce::Decibels::decibelsToGain(smoothedMasterGain.getNextValue());
@@ -166,31 +162,18 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             auto* input = buffer.getWritePointer(channel);
             if (postEnvelopeFollower.getActivation()) {preEnvelopeFollower.followEnv(input[sample], channel);}
 
-            //Distortion
-            if (distortion.getDistortionType() == Downsample) {
-                const float dryInput = input[sample];
-                if (counter == 0) {
-                    hold = input[sample];
-                }
-                input[sample] = hold;
-                counter += 0.5;
-                if (counter >= static_cast<int>(juce::Decibels::gainToDecibels(distortion.getDrive()))) {
-                    counter = 0;
-                }
-                input[sample] *= distortion.getOutput();
-                float mix = distortion.getMix();
-                input[sample] = dryInput * (1.0f - mix / 100) + (mix / 100) * input[sample];
-            }
-            else {
-                input[sample] = distortion.process(input[sample]);
-            }
-            //Compression
-            if (compressor.getActivation()) {
-                input[sample] = compressor.compProcessSample(input[sample], channel);
+            if (routing == DistFirst) {
 
-                /*
-                compressor.followEnv(input[sample], channel);
-                input[sample] *= compressor.computeGainChange(channel);*/
+                input[sample] = distortion.process(input[sample]);
+                if (compressor.getActivation()) { input[sample] = compressor.compProcessSample(input[sample], channel);}
+
+            }
+
+            else if (routing == CompFirst) {
+
+                if (compressor.getActivation()) {input[sample] = compressor.compProcessSample(input[sample], channel);}
+                input[sample] = distortion.process(input[sample]);
+
             }
 
             //Post processing envelope
@@ -440,6 +423,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     addIntParam("compressorPasses", "compressorPasses", juce::NormalisableRange<int>(1, 4), 1, "");
 
     addChoiceParam("algButton", "algButton", {"Soft Clip", "Hard Clip", "Foldback", "Downsample"}, 0);
+    addChoiceParam("routingButton", "routingButton", {"Distortion -> Compression", "Compression -> Distortion"}, 0);
     addBoolParam("compressorButton", "compressorButton", true);
     addBoolParam("envelopeButton", "envelopeButton", true);
 

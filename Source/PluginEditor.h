@@ -38,10 +38,10 @@ private:
     juce::Slider outputSlider;
     juce::Slider mixSlider;
 
-    juce::Label satLabel{"Drive Label", "Drive (+dB)"};
-    juce::Label threshLabel{"Thresh Label", "Thresh (+dB)"};
-    juce::Label outputLabel{"Output Label", "Output (+dB)"};
-    juce::Label mixLabel{"Mix Label", "Mix (%)"};
+    juce::Label satLabel{"Drive Label", "Drive"};
+    juce::Label threshLabel{"Thresh Label", "Thresh"};
+    juce::Label outputLabel{"Output Label", "Output"};
+    juce::Label mixLabel{"Mix Label", "Mix"};
     juce::AudioProcessorValueTreeState::SliderAttachment satSliderAttachment;
     juce::AudioProcessorValueTreeState::SliderAttachment threshSliderAttachment;
     juce::AudioProcessorValueTreeState::SliderAttachment outputSliderAttachment;
@@ -92,6 +92,9 @@ private:
     juce::AudioProcessorValueTreeState::SliderAttachment masterGainSliderAttachment;
 
     juce::Label masterGainLabel{"masterGain", "Master Vol."};
+
+    juce::TextButton routingButton;
+    juce::AudioProcessorValueTreeState::ButtonAttachment routingButtonAttachment;
 
     //Filter
     /*juce::TextButton filterTypeButton;
