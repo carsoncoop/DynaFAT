@@ -1,6 +1,8 @@
 # DynaFAT
 DynaFAT is a real time audio processing VST made for electronic music production. DynaFAT preserves dynamics while adding richness to bass synths through aggressive distortion, multiband compression, and envelope following.
 
+🎥 [Work In Progress Demo Video](https://www.youtube.com/watch?v=gI5iUk-rYCE)
+
 Requirements:
 - C++
 - CMake
@@ -16,12 +18,12 @@ Future Features:
 - Adjustable curve of envelope follower, allowing for a sharp J-curve (sharp vs. shallow fall off)
 - Allow user to save and load presets
 - "Makeup Gain" button next to master volume that will set it automatically
-- "High Quality" button to activate oversampling
-- Routing button to change the order of distortion & compression
+- "High quality" button that uses oversampling
+- "routing" button to swap order or distortion & compression
 
 Future Knobs:
 - Compressor
-  - Input gain
+    - Input gain
 
 
 Known bugs:
@@ -29,14 +31,14 @@ Known bugs:
 - Compressing even in dead zone.
 
 Current To-Do List:
-- Implement back-end of compressor "passes"
+- Implement "passes" for compressor
 - For the rest of the band splitting, write functions that take place per channel, that way CPU time is reduced
-  - Envelopes need to be followed for every channel, and every band
+    - Envelopes need to be followed for every channel, and every band
 
 Effect Class Layout:
 - Member variables store state of parameters through setter functions
 - Member functions process single samples of audio, only passing in the sample as a parameter
-   → Access member variables for parameter values
+  → Access member variables for parameter values
 
 Reminder for Developer:
 - PC VST Path: "F:/ProgramData/Ableton/Live 9 Standard"
