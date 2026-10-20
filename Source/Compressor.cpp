@@ -3,7 +3,8 @@
 
 void Compressor::prepare(const juce::dsp::ProcessSpec& spec,
                          const float envAttackMs_, const float envReleaseMs_,
-                         const float ratio_, const float thresh_dB_high_, const float thresh_dB_low_) {
+                         const float ratio_, const float thresh_dB_high_, const float thresh_dB_low_,
+                         const int passes_) {
 
     sampleRate = spec.sampleRate;
     numChannels = spec.numChannels;
@@ -49,6 +50,10 @@ void Compressor::setThreshHigh(const float thresh_dB_high_) {
 
 void Compressor::setThreshLow(const float thresh_dB_low_) {
     thresh_dB_low = thresh_dB_low_;
+}
+
+void Compressor::setNumPasses(const int passes_) {
+    passes = passes_;
 }
 
 void Compressor::followEnv (const float inputSample, const int channelIndex, const int bandIndex) {
@@ -97,27 +102,35 @@ float Compressor::computeGainChange(const int channelIndex, const int bandIndex)
 
 }
 
-float Compressor::processSample(float inputSample, int channelIndex) {
-    //Split into 3 bands per sample per channel
-    float lowSample = lowCrossoverWide.processSample(channelIndex, inputSample);
-    float upperRemainder = highCrossoverWide.processSample(channelIndex, inputSample);
+float Compressor::compProcessSample(float inputSample, int channelIndex) {
 
-    float midSample = lowCrossoverNarrow.processSample(channelIndex, upperRemainder);
-    float highSample = highCrossoverNarrow.processSample(channelIndex, upperRemainder);
+    float signal = inputSample;
 
-    //Process each band compression per sample per channel
+    for (int i = 0; i < passes; i++) {
 
-    followEnv(lowSample, channelIndex, lowBand);
-    const float lowGain = computeGainChange(channelIndex, lowBand);
-    const float processedLow = lowSample * lowGain;
+        //Split into 3 bands per sample per channel
+        float lowSample = lowCrossoverWide.processSample(channelIndex, signal);
+        float upperRemainder = highCrossoverWide.processSample(channelIndex, signal);
 
-    followEnv(midSample, channelIndex, midBand);
-    const float midGain = computeGainChange(channelIndex, midBand);
-    const float processedMid = midSample * midGain;
+        float midSample = lowCrossoverNarrow.processSample(channelIndex, upperRemainder);
+        float highSample = highCrossoverNarrow.processSample(channelIndex, upperRemainder);
 
-    followEnv(highSample, channelIndex, highBand);
-    const float highGain = computeGainChange(channelIndex, highBand);
-    const float processedHigh = highSample * highGain;
+        //Process each band compression per sample per channel
 
-    return processedLow + processedMid + processedHigh;
+        followEnv(lowSample, channelIndex, lowBand);
+        const float lowGain = computeGainChange(channelIndex, lowBand);
+        const float processedLow = lowSample * lowGain;
+
+        followEnv(midSample, channelIndex, midBand);
+        const float midGain = computeGainChange(channelIndex, midBand);
+        const float processedMid = midSample * midGain;
+
+        followEnv(highSample, channelIndex, highBand);
+        const float highGain = computeGainChange(channelIndex, highBand);
+        const float processedHigh = highSample * highGain;
+
+        signal = processedLow + processedMid + processedHigh;
+    }
+    return signal;
+
 }

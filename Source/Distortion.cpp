@@ -2,12 +2,13 @@
 
 Distortion::Distortion(){}
 
-Distortion::Distortion(float sampleRate_, float drive_, float thresh_, float mix_, float output_) {
+Distortion::Distortion(float sampleRate_, float drive_, float thresh_, float mix_, float output_, int passes_) {
     sampleRate = sampleRate_;
     drive = drive_;
     thresh = thresh_;
     mix = mix_;
     output = output_;
+    passes = passes_;
 }
 
 
@@ -27,6 +28,10 @@ float Distortion::getDrive() const {
     return drive;
 }
 
+int Distortion::getNumPasses() const {
+    return passes;
+}
+
 void Distortion::setDrive(const float drive_) {
     drive = drive_;
 }
@@ -43,41 +48,49 @@ void Distortion::setOutput(const float output_) {
     output = output_;
 }
 
+void Distortion::setNumPasses(int passes_) {
+    passes = passes_;
+}
+
 void Distortion::setDistortionType(DistortionType type) {
     distortionAlg = type;
 }
 
-void Distortion::prepare(const double sampleRate_, const float drive_, const float thresh_, const float mix_, const float output_) {
+void Distortion::prepare(const double sampleRate_, const float drive_, const float thresh_, const float mix_, const float output_, const int passes_) {
     sampleRate = sampleRate_;
     drive = drive_;
     thresh = thresh_;
     mix = mix_;
     output = output_;
+    passes = passes_;
     distortionAlg = SoftClip;
 }
 
-float Distortion::process(const float inputSample) const {
-    float signal = 0.0f;
-    switch (distortionAlg) {
-        case SoftClip:
-            signal = thresh * std::tanh((inputSample * drive) / thresh);
-            signal *= output;
-            signal = inputSample * (1.0f - mix / 100) + (mix / 100) * signal;
+float Distortion::process (const float inputSample) const
+{
+    float signal = inputSample;
 
-            return signal;
-        case HardClip:
-            signal = juce::jlimit(-thresh,thresh, (inputSample * drive));
-            signal *= output;
-            signal = inputSample * (1.0f - mix / 100) + (mix / 100) * signal;
-            return signal;
-        case Foldback:
-            signal = std::abs(std::abs(fmod(((inputSample * drive) - thresh), (4.0f * thresh))) - 2.0f * thresh) - thresh;
-            signal *= output;
-            signal = inputSample * (1.0f - mix / 100) + (mix / 100) * signal;
-            return signal;
-        case Downsample:
-            break;
-            //Downsample case must be handled in the process block because it requires multiple samples
+    for (int i = 0; i < passes; i++){
+        switch (distortionAlg)
+        {
+            case SoftClip:
+                signal = thresh * std::tanh ((signal * drive) / thresh);
+                break;
+
+            case HardClip:
+                signal = juce::jlimit (-thresh, thresh, signal * drive);
+                break;
+
+            case Foldback:
+                signal = std::abs (std::abs (std::fmod ((signal * drive) - thresh, 4.0f * thresh)) - 2.0f * thresh) - thresh;
+                break;
+
+            case Downsample:
+                break; // handled in processBlock
+        }
     }
-    return 0.0f;
+
+    signal *= output;
+    const float wet = mix / 100.0f;
+    return inputSample * (1.0f - wet) + wet * signal;
 }

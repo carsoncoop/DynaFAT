@@ -22,6 +22,8 @@ class Compressor {
 
     bool activated = true;
 
+    int passes = 1;
+
     //Band splitting (middle band is created later)
     juce::dsp::LinkwitzRileyFilter<float> lowCrossoverWide;
     juce::dsp::LinkwitzRileyFilter<float> highCrossoverWide;
@@ -36,7 +38,7 @@ class Compressor {
 
 public:
     void prepare(const juce::dsp::ProcessSpec& spec, float envAttackMs_, float envReleaseMs_,
-        float ratio_, float thresh_dB_high_, float thresh_dB_low_);
+        float ratio_, float thresh_dB_high_, float thresh_dB_low_, int passes_);
 
     std::array<float, 8 * 3> getEnvPerChannel() const { return envChannelByBand; }
 
@@ -51,6 +53,7 @@ public:
     void setRatio(float ratio_);
     void setThreshHigh(float thresh_dB_high_);
     void setThreshLow(float thresh_dB_low_);
+    void setNumPasses(int passes_);
 
     void followEnv (float inputSample, int channelIndex, int bandIndx);
 
@@ -58,5 +61,5 @@ public:
     //Do math in dB
     [[nodiscard]] float computeGainChange (int channelIndex, int bandIndex);
 
-    float processSample(float inputSample, int channelIndex);
+    float compProcessSample(float inputSample, int channelIndex);
 };

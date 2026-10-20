@@ -49,10 +49,16 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     prepareSmoothed(smoothedCompAttack, "compAttack");
     prepareSmoothed(smoothedCompRelease, "compRelease");
 
+    const int compressorPasses = juce::roundToInt(state.getRawParameterValue("compressorPasses")->load());
+
     compressor.prepare(spec,smoothedCompAttack.getCurrentValue(),
         smoothedCompRelease.getCurrentValue(), smoothedCompRatio.getCurrentValue(),
-        smoothedCompThreshHigh.getCurrentValue(), smoothedCompThreshLow.getCurrentValue()
+        smoothedCompThreshHigh.getCurrentValue(), smoothedCompThreshLow.getCurrentValue(),
+        compressorPasses
         );
+
+
+
 
     //Distortion Preparation--------------------------------------------------------------------------------------------
     prepareSmoothed(smoothedDrive, "drive");
@@ -60,12 +66,13 @@ void AudioPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPer
     prepareSmoothed(smoothedOutput, "output");
     prepareSmoothed(smoothedMix, "mix");
 
+    const int distortionPasses = juce::roundToInt(state.getRawParameterValue("distortionPasses")->load());
     distortion.prepare(getSampleRate(),
         smoothedDrive.getCurrentValue(), smoothedThresh.getCurrentValue(),
-        smoothedMix.getCurrentValue(), smoothedOutput.getCurrentValue());
+        smoothedMix.getCurrentValue(), smoothedOutput.getCurrentValue(), distortionPasses);
 
     //General preparation-----------------------------------------------------------------------------------------------
-    prepareSmoothed(smoothedMasterGain, "masterDrive");
+    prepareSmoothed(smoothedMasterGain, "masterGain");
 
     //Filter preparation------------------------------------------------------------------------------------------------
     /*filter.prepare();
@@ -102,6 +109,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedThresh.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("thresh")->load()));
     smoothedOutput.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("output")->load()));
     smoothedMix.setTargetValue(state.getRawParameterValue("mix")->load());
+    distortion.setNumPasses(juce::roundToInt(state.getRawParameterValue("distortionPasses")->load()));
 
     /*//Filter------------------------------------------------------------------------------------------------------------
     smoothedCutoff.setTargetValue(state.getRawParameterValue("cutoff")->load());
@@ -115,6 +123,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedCompThreshHigh.setTargetValue(state.getRawParameterValue("compThreshHigh")->load());
     smoothedCompThreshLow.setTargetValue(state.getRawParameterValue("compThreshLow")->load());
     smoothedCompRatio.setTargetValue(state.getRawParameterValue("compRatio")->load());
+    compressor.setNumPasses(juce::roundToInt(state.getRawParameterValue("compressorPasses")->load()));
 
     //General-----------------------------------------------------------------------------------------------------------
     smoothedMasterGain.setTargetValue(state.getRawParameterValue("masterGain")->load());
@@ -177,7 +186,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             }
             //Compression
             if (compressor.getActivation()) {
-                input[sample] = compressor.processSample(input[sample], channel);
+                input[sample] = compressor.compProcessSample(input[sample], channel);
 
                 /*
                 compressor.followEnv(input[sample], channel);
@@ -188,6 +197,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
             //*Gain match goes here*
             if (postEnvelopeFollower.getActivation() == true) {
+
                 postEnvelopeFollower.followEnv(input[sample], channel);
 
                 //Use correction gain in envelope follower
@@ -197,6 +207,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 //Use Dynamix for envelope follower
                 input[sample] = postEnvelopeFollower.useDynamix(input[sample],
                     postEnvSignal);
+
             }
             input[sample] *= masterGain;
         }
@@ -380,9 +391,26 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
                 })));
     };
 
+    auto addIntParam = [&layout](const juce::String& id,
+                              const juce::String& name,
+                              const juce::NormalisableRange<int>& range,
+                              int defaultValue,
+                              const juce::String& suffix = {})
+    {
+        layout.add(std::make_unique<juce::AudioParameterInt>(
+            juce::ParameterID { id, 1 },
+            name,
+            range.start,
+            range.end,
+            defaultValue,
+            juce::AudioParameterIntAttributes().withLabel(suffix)));
+    };
+
     auto addBoolParam = [&](const juce::String& id, const juce::String& name, bool def) {
         layout.add(std::make_unique<juce::AudioParameterBool>(id, name, def));
     };
+
+
 
     auto addChoiceParam = [&](const juce::String& id, const juce::String& name,
         const juce::StringArray& choices, int defaultIndex) {
@@ -407,6 +435,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     addFloatParam("compAttack", "compAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
     addFloatParam("compRelease", "compRelease", juce::NormalisableRange<float>(2.0f, 200.0f), 15.0f, " ms");
     addFloatParam("masterGain", "masterGain", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f, " dB");
+
+    addIntParam("distortionPasses", "distortionPasses", juce::NormalisableRange<int>(1, 4), 1, "");
+    addIntParam("compressorPasses", "compressorPasses", juce::NormalisableRange<int>(1, 4), 1, "");
 
     addChoiceParam("algButton", "algButton", {"Soft Clip", "Hard Clip", "Foldback", "Downsample"}, 0);
     addBoolParam("compressorButton", "compressorButton", true);

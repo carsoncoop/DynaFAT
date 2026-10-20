@@ -17,22 +17,25 @@ class Distortion {
     float thresh = 0.0f;
     float mix = 100.0f;
     float output = 0.0f;
+    int passes = 1;
 
     DistortionType distortionAlg = SoftClip;
 
 public:
     Distortion();
-    Distortion(float sampleRate_, float drive_, float thresh_, float mix_, float output_);
+    Distortion(float sampleRate_, float drive_, float thresh_, float mix_, float output_, int passes_);
 
     [[nodiscard]] DistortionType getDistortionType() const;
     [[nodiscard]] float getDrive() const;
     [[nodiscard]] float getMix() const;
     [[nodiscard]] float getOutput() const;
+    [[nodiscard]] int getNumPasses() const;
     void setDrive(float drive_);
     void setThresh(float thresh_);
     void setMix(float mix_);
     void setOutput(float output_);
+    void setNumPasses(int passes_);
     void setDistortionType(DistortionType type);
-    void prepare(double sampleRate_, float drive_, float thresh_, float mix_, float output_);
+    void prepare(double sampleRate_, float drive_, float thresh_, float mix_, float output_, int passes_);
     [[nodiscard]] float process(float inputSample) const;
 };

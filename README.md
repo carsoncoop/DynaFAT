@@ -16,6 +16,8 @@ Future Features:
 - Adjustable curve of envelope follower, allowing for a sharp J-curve (sharp vs. shallow fall off)
 - Allow user to save and load presets
 - "Makeup Gain" button next to master volume that will set it automatically
+- "High Quality" button to activate oversampling
+- Routing button to change the order of distortion & compression
 
 Future Knobs:
 - Compressor
@@ -27,6 +29,7 @@ Known bugs:
 - Compressing even in dead zone.
 
 Current To-Do List:
+- Implement back-end of compressor "passes"
 - For the rest of the band splitting, write functions that take place per channel, that way CPU time is reduced
   - Envelopes need to be followed for every channel, and every band
 

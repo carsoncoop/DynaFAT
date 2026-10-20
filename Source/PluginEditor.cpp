@@ -24,6 +24,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     threshSliderAttachment(processorRef.getState(), "thresh", threshSlider),
     outputSliderAttachment(processorRef.getState(), "output", outputSlider),
     mixSliderAttachment(processorRef.getState(), "mix", mixSlider),
+    distortionPassesSliderAttachment(processorRef.getState(), "distortionPasses", distortionPassesSlider),
     /*cutoffSliderAttachment(processorRef.getState(), "cutoff", cutoffSlider),
     resoSliderAttachment(processorRef.getState(), "resonance", resoSlider),*/
     compressorButtonAttachment(processorRef.getState(), "compressorButton", compressorButton),
@@ -32,6 +33,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     compRatioSliderAttachment(processorRef.getState(), "compRatio", compRatioSlider),
     compAttackSliderAttachment(processorRef.getState(), "compAttack", compAttackSlider),
     compReleaseSliderAttachment(processorRef.getState(), "compRelease", compReleaseSlider),
+    compressorPassesSliderAttachment(processorRef.getState(), "compressorPasses", compressorPassesSlider),
     envelopeButtonAttachment(processorRef.getState(), "envelopeButton", envelopeButton),
     envAttackSliderAttachment(processorRef.getState(), "envAttack", envAttackSlider),
     envReleaseSliderAttachment(processorRef.getState(), "envRelease", envReleaseSlider),
@@ -65,10 +67,11 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setupLabel(compressionHeader);
     setupLabel(envelopeHeader);
 
-    visual.setBufferSize(64);
-    visual.setSamplesPerBlock(64);
-    visual.setRepaintRate(60);
-    visual.setColours(juce::Colours::black, juce::Colours::blueviolet);
+    const auto background = getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId);
+    visual.setBufferSize(128);
+    visual.setSamplesPerBlock(128);
+    visual.setRepaintRate(144);
+    visual.setColours(background, juce::Colours::orangered);
     startTimerHz(60);
     addAndMakeVisible(visual);
 
@@ -79,6 +82,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setupKnob(outputSlider, outputLabel);
     setupKnob(mixSlider, mixLabel);
     addAndMakeVisible(algButton);
+    setupKnob(distortionPassesSlider, distortionPassesLabel);
+    distortionPassesSlider.setSliderStyle (juce::Slider::IncDecButtons);
+    distortionPassesSlider.setTextBoxStyle (juce::Slider::TextBoxLeft, false, 60, 24);
+
 
     //Initialize algButton text
     const juce::StringArray algChoices { "Soft Clip", "Hard Clip", "Foldback", "Downsample"};
@@ -125,6 +132,10 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     };
 
     //Compressor Parameters---------------------------------------------------------------------------------------------
+
+    compressorPassesSlider.setEnabled(false); //Temporary line to disable compressorPassesSlider while debugging
+
+
     setupKnob(compThreshHighSlider, compThreshHighLabel);
     setupKnob(compThreshLowSlider, compThreshLowLabel);
     setupKnob(compRatioSlider, compRatioLabel);
@@ -145,6 +156,9 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     linkMinMaxSliders(compThreshLowSlider, compThreshHighSlider);
 
+    setupKnob(compressorPassesSlider, compressorPassesLabel);
+    compressorPassesSlider.setSliderStyle (juce::Slider::IncDecButtons);
+    compressorPassesSlider.setTextBoxStyle (juce::Slider::TextBoxLeft, false, 60, 24);
 
     //Envelope Follower Parameters--------------------------------------------------------------------------------------
     setupKnob(envAttackSlider, envAttackLabel);
@@ -260,38 +274,42 @@ void AudioPluginAudioProcessorEditor::paint (juce::Graphics& g)
 
 void AudioPluginAudioProcessorEditor::resized()
 {
-    visual.setBounds(getWidth() / 2 - 75,20, 150 ,150);
-    distortionHeader.setBounds(getWidth() / 5 - 62,-40, 150 ,150);
-    compressionHeader.setBounds(getWidth() / 5 * 4 - 62,-40, 150 ,150);
+    visual.setBounds(0,550, 150 ,150);
+    distortionHeader.setBounds(getWidth() / 5 - 42,-40, 150 ,150);
+    compressionHeader.setBounds(getWidth() / 5 * 4 - 82,-40, 150 ,150);
     envelopeHeader.setBounds(getWidth() / 2 - 75, getHeight() / 5 * 3, 150, 150);
 
     //Distortion Drawings-----------------------------------------------------------------------------------------------
-    algButton.setBounds(getWidth() / 5 - 28, getHeight() / 5 - 80, 80, 30);
+    algButton.setBounds(getWidth() / 5 - 8, getHeight() / 5 - 80, 80, 30);
 
-    satSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 3 - 40, 90, 90);
-    threshSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 5 - 40, 90, 90);
-    outputSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 7 - 40, 90, 90);
-    mixSlider.setBounds(getWidth() / 5 - 35, getHeight() / 15 * 9 - 40, 90, 90);
+    satSlider.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 3 - 40, 90, 90);
+    threshSlider.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 5 - 40, 90, 90);
+    outputSlider.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 7 - 40, 90, 90);
+    mixSlider.setBounds(getWidth() / 5 - 15, getHeight() / 15 * 9 - 40, 90, 90);
+    distortionPassesSlider.setBounds(getWidth() / 5 - 95, getHeight() / 15 * 5 + 35, 60, 60);
 
     satLabel.setBounds(satSlider.getX(), satSlider.getBottom() - 10, satSlider.getWidth(), 18);
     threshLabel.setBounds(threshSlider.getX(), threshSlider.getBottom() - 10, threshSlider.getWidth(), 18);
     outputLabel.setBounds(outputSlider.getX(), outputSlider.getBottom() - 10, outputSlider.getWidth(), 18);
     mixLabel.setBounds(mixSlider.getX(), mixSlider.getBottom() - 10, mixSlider.getWidth(), 18);
+    distortionPassesLabel.setBounds(distortionPassesSlider.getX() - 18, distortionPassesSlider.getBottom() - 15, distortionPassesSlider.getWidth(), 18);
 
     //Compressor Drawings-----------------------------------------------------------------------------------------------
-    compressorButton.setBounds(getWidth() / 5 * 4, getHeight() / 5 - 80, 60, 30);
+    compressorButton.setBounds(getWidth() / 5 * 4 - 20, getHeight() / 5 - 80, 60, 30);
 
-    compThreshHighSlider.setBounds(getWidth() / 5 * 4 + 14, getHeight() / 15 * 3 - 40, 60, 60);
-    compThreshLowSlider.setBounds(getWidth() / 5 * 4 - 54, getHeight() / 15 * 3 - 40, 60, 60);
-    compRatioSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 5 - 40, 90, 90);
-    compAttackSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 7 - 40, 90, 90);
-    compReleaseSlider.setBounds(getWidth() / 5 * 4 - 35, getHeight() / 15 * 9 - 40, 90, 90);
+    compThreshHighSlider.setBounds(getWidth() / 5 * 4 - 6, getHeight() / 15 * 3 - 40, 60, 60);
+    compThreshLowSlider.setBounds(getWidth() / 5 * 4 - 74, getHeight() / 15 * 3 - 40, 60, 60);
+    compRatioSlider.setBounds(getWidth() / 5 * 4 - 55, getHeight() / 15 * 5 - 40, 90, 90);
+    compAttackSlider.setBounds(getWidth() / 5 * 4 - 55, getHeight() / 15 * 7 - 40, 90, 90);
+    compReleaseSlider.setBounds(getWidth() / 5 * 4 - 55, getHeight() / 15 * 9 - 40, 90, 90);
+    compressorPassesSlider.setBounds(getWidth() / 5 * 4 + 50, getHeight() / 15 * 5 + 35, 60, 60);
 
     compThreshHighLabel.setBounds(compThreshHighSlider.getX(), compThreshHighSlider.getBottom() - 10, compThreshHighSlider.getWidth(), 18);
     compThreshLowLabel.setBounds(compThreshLowSlider.getX(), compThreshLowSlider.getBottom() - 10, compThreshLowSlider.getWidth(), 18);
     compRatioLabel.setBounds(compRatioSlider.getX(), compRatioSlider.getBottom() - 10, compRatioSlider.getWidth(), 18);
     compAttackLabel.setBounds(compAttackSlider.getX(), compAttackSlider.getBottom() - 10, compAttackSlider.getWidth(), 18);
     compReleaseLabel.setBounds(compReleaseSlider.getX(), compReleaseSlider.getBottom() - 10, compReleaseSlider.getWidth(), 18);
+    compressorPassesLabel.setBounds(compressorPassesSlider.getX() - 18, compressorPassesSlider.getBottom() - 15, compressorPassesSlider.getWidth(), 18);
 
     //Envelope Follower Drawings----------------------------------------------------------------------------------------
 

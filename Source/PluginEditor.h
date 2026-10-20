@@ -47,6 +47,10 @@ private:
     juce::AudioProcessorValueTreeState::SliderAttachment outputSliderAttachment;
     juce::AudioProcessorValueTreeState::SliderAttachment mixSliderAttachment;
 
+    juce::Slider distortionPassesSlider;
+    juce::Label distortionPassesLabel{"distortionPasses", "Passes"};
+    juce::AudioProcessorValueTreeState::SliderAttachment distortionPassesSliderAttachment;
+
     juce::AudioVisualiserComponent visual {1};
 
 
@@ -66,6 +70,11 @@ private:
     juce::Label compRatioLabel{"compRatioLabel", "Ratio"};
     juce::Label compAttackLabel{"compAttackLabel", "Attack"};
     juce::Label compReleaseLabel{"compReleaseLabel", "Release"};
+
+    juce::Slider compressorPassesSlider;
+    juce::Label compressorPassesLabel{"compressorPasses", "Passes"};
+    juce::AudioProcessorValueTreeState::SliderAttachment compressorPassesSliderAttachment;
+
 
     //Envelope Follower
     juce::ToggleButton envelopeButton;
