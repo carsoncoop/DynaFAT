@@ -18,9 +18,9 @@ Known bugs:
 - Compressing even in dead zone.
 
 Current To-Do List:
+- Split compressor bands with Linkwitz-Riley filters once per buffer, and process each sample individually
 - Implement "passes" for compressor
-- For the rest of the band splitting, write functions that take place per channel, that way CPU time is reduced
-    - Envelopes need to be followed for every channel, and every band
+- Implement downsample in distortion.process() function
 
 Effect Class Layout:
 - Member variables store state of parameters through setter functions

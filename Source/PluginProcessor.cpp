@@ -104,6 +104,11 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedEnvRelease.setTargetValue(state.getRawParameterValue("envRelease")->load());
     smoothedEnvDynamix.setTargetValue(state.getRawParameterValue("envDynamix")->load());
 
+    preEnvelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
+    preEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
+    postEnvelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
+    postEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
+
     //Distortion--------------------------------------------------------------------------------------------------------
     smoothedDrive.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("drive")->load()));
     smoothedThresh.setTargetValue(juce::Decibels::decibelsToGain(state.getRawParameterValue("thresh")->load()));
@@ -125,6 +130,9 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     smoothedCompRatio.setTargetValue(state.getRawParameterValue("compRatio")->load());
     compressor.setNumPasses(juce::roundToInt(state.getRawParameterValue("compressorPasses")->load()));
 
+    compressor.setEnvAttack(smoothedCompAttack.getNextValue());
+    compressor.setEnvRelease(smoothedCompRelease.getNextValue());
+
     //General-----------------------------------------------------------------------------------------------------------
     smoothedMasterGain.setTargetValue(state.getRawParameterValue("masterGain")->load());
 
@@ -136,6 +144,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         filter.myProcess(juce::dsp::AudioBlock<float>(buffer));
     }*/
 
+
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
         // compute master gain for this sample (smoothed in dB then converted to linear)
         const float masterGain = juce::Decibels::decibelsToGain(smoothedMasterGain.getNextValue());
@@ -145,14 +154,8 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         distortion.setMix(smoothedMix.getNextValue());
         distortion.setOutput(smoothedOutput.getNextValue());
 
-        preEnvelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
-        preEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
-        postEnvelopeFollower.setEnvAttack(smoothedEnvAttack.getNextValue());
-        postEnvelopeFollower.setEnvRelease(smoothedEnvRelease.getNextValue());
         postEnvelopeFollower.setEnvDynamix(smoothedEnvDynamix.getNextValue());
 
-        compressor.setEnvAttack(smoothedCompAttack.getNextValue());
-        compressor.setEnvRelease(smoothedCompRelease.getNextValue());
         compressor.setThreshHigh(smoothedCompThreshHigh.getNextValue());
         compressor.setThreshLow(smoothedCompThreshLow.getNextValue());
         compressor.setRatio(smoothedCompRatio.getNextValue());

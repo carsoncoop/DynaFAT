@@ -134,7 +134,7 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
 
     //Compressor Parameters---------------------------------------------------------------------------------------------
 
-    compressorPassesSlider.setEnabled(false); //Temporary line to disable compressorPassesSlider while debugging
+    //compressorPassesSlider.setEnabled(false); //Temporary line to disable compressorPassesSlider while debugging
 
 
     setupKnob(compThreshHighSlider, compThreshHighLabel);
