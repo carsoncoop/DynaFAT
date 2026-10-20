@@ -69,8 +69,8 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     setupLabel(envelopeHeader);
 
     const auto background = getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId);
-    visual.setBufferSize(128);
-    visual.setSamplesPerBlock(128);
+    visual.setBufferSize(90);
+    visual.setSamplesPerBlock(90);
     visual.setRepaintRate(144);
     visual.setColours(background, juce::Colours::deepskyblue);
     startTimerHz(60);

@@ -409,8 +409,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     addFloatParam("mix", "mix", juce::NormalisableRange<float>(0.0f, 100.0f), 100.0f, "%");
     //addFloatParam("cutoff", "cutoff", cutoffRange, 20000.0f, "Hz");
     //addFloatParam("resonance", "resonance", juce::NormalisableRange<float>(0.01f, 6.0f), 0.7f, "");
-    addFloatParam("envAttack", "envAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
-    addFloatParam("envRelease", "envRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 15.0f, " ms");
+    addFloatParam("envAttack", "envAttack", juce::NormalisableRange<float>(1.0f, 200.0f), 5.0f, " ms");
+    addFloatParam("envRelease", "envRelease", juce::NormalisableRange<float>(1.0f, 200.0f), 5.0f, " ms");
     addFloatParam("envDynamix", "envDynamix", juce::NormalisableRange<float>(0.0f, 100.0f), 100.0f, " %");
     addFloatParam("compThreshHigh", "compThreshHigh", juce::NormalisableRange<float>(-36.0f, 0.0f), -6.0f, " dB");
     addFloatParam("compThreshLow", "compThreshLow", juce::NormalisableRange<float>(-36.0f, 0.0f), -12.0f, " dB");
