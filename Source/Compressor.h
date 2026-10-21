@@ -13,15 +13,18 @@ class Compressor {
     std::array<float, 8 * 3> envChannelByBand = {};
     std::array<float, 8 * 3> smoothedGainDbChannelByBand = {};
 
+    static constexpr int numBands = 3;
+    std::array<juce::AudioBuffer<float>, numBands> bandBuffers;
+
     juce::SmoothedValue<float> smoothedCompThreshHigh;
     juce::SmoothedValue<float> smoothedCompThreshLow;
     juce::SmoothedValue<float> smoothedCompRatio;
     juce::SmoothedValue<float> smoothedCompAttack;
     juce::SmoothedValue<float> smoothedCompRelease;
 
-    bool activated = true;
-
     int passes = 1;
+
+    bool activated = true;
 
     //Band splitting (middle band is created later)
     juce::dsp::LinkwitzRileyFilter<float> lowCrossoverWide;
@@ -36,8 +39,8 @@ class Compressor {
     };
 
 public:
-    void prepare(const juce::dsp::ProcessSpec& spec, float envAttackMs_, float envReleaseMs_,
-        float ratio_, float thresh_dB_high_, float thresh_dB_low_, int passes_);
+    void prepare(const juce::dsp::ProcessSpec& spec, float envAttackMs, float envReleaseMs,
+                float thresh_dB_high, float thresh_dB_low, int passes_, float ratio);
 
     std::array<float, 8 * 3> getEnvPerChannel() const { return envChannelByBand; }
 
@@ -45,14 +48,14 @@ public:
     bool getActivation() const {return activated;}
 
     //attack/release for envelope measurements
-    void setEnvAttack(float envAttackMs_);
-    void setEnvRelease(float envReleaseMs_);
+    void setEnvAttack(float envAttackMs);
+    void setEnvRelease(float envReleaseMs);
 
     //ratio & thresh
-    void setRatio(float ratio_);
-    void setThreshHigh(float thresh_dB_high_);
-    void setThreshLow(float thresh_dB_low_);
-    void setNumPasses(int passes_);
+    void setRatio(float ratio);
+    void setThreshHigh(float thresh_dB_high);
+    void setThreshLow(float thresh_dB_low);
+    void setNumPasses(int passes);
 
     void followEnv (float inputSample, int channelIndex, int bandIndx);
 

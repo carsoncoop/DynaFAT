@@ -2,19 +2,28 @@
 #include <algorithm>
 
 void Compressor::prepare(const juce::dsp::ProcessSpec& spec,
-                         const float envAttackMs_, const float envReleaseMs_,
-                         const float ratio_, const float thresh_dB_high_, const float thresh_dB_low_,
-                         const int passes_) {
+                         const float envAttackMs, const float envReleaseMs,
+                         const float thresh_dB_high, const float thresh_dB_low,
+                         const int passes_, const float ratio) {
+
+    constexpr double rampSeconds = 0.02;
+
+    smoothedCompThreshHigh.reset(sampleRate, rampSeconds);
+    smoothedCompThreshLow.reset(sampleRate, rampSeconds);
+    smoothedCompRatio.reset(sampleRate, rampSeconds);
+    smoothedCompAttack.reset(sampleRate, rampSeconds);
+    smoothedCompRelease.reset(sampleRate, rampSeconds);
+
+    smoothedCompThreshHigh.setCurrentAndTargetValue(thresh_dB_high);
+    smoothedCompThreshLow.setCurrentAndTargetValue(thresh_dB_low);
+    smoothedCompRatio.setCurrentAndTargetValue(ratio);
+    smoothedCompAttack.setCurrentAndTargetValue(envAttackMs);
+    smoothedCompRelease.setCurrentAndTargetValue(envReleaseMs);
+
+    passes = passes_;
 
     sampleRate = spec.sampleRate;
     numChannels = spec.numChannels;
-
-    envAttackCoeff = 1.0f - std::exp(-1.0f / (envAttackMs_ * 0.001f * sampleRate));
-    envReleaseCoeff = 1.0f - std::exp(-1.0f / (envReleaseMs_ * 0.001f * sampleRate));
-
-    ratio = ratio_;
-    thresh_dB_high = thresh_dB_high_;
-    thresh_dB_low = thresh_dB_low_;
 
     //Linkwitz-Riley
     lowCrossoverWide.prepare(spec);
@@ -30,26 +39,30 @@ void Compressor::prepare(const juce::dsp::ProcessSpec& spec,
     highCrossoverWide.setCutoffFrequency(120.0f);
     lowCrossoverNarrow.setCutoffFrequency(2500.0f);
     highCrossoverNarrow.setCutoffFrequency(2500.0f);
+
+    bandBuffers[0].setSize(numChannels, spec.maximumBlockSize);
+    bandBuffers[1].setSize(numChannels, spec.maximumBlockSize);
+    bandBuffers[2].setSize(numChannels, spec.maximumBlockSize);
 }
 
-void Compressor::setEnvAttack(const float envAttackMs_) {
-    envAttackCoeff = 1.0f - std::exp(-1.0f / (envAttackMs_ * 0.001f * sampleRate));
+void Compressor::setEnvAttack(const float envAttackMs) {
+    smoothedCompAttack.setTargetValue(envAttackMs);
 }
 
-void Compressor::setEnvRelease(const float envReleaseMs_) {
-    envReleaseCoeff = 1.0f - std::exp(-1.0f / (envReleaseMs_ * 0.001f * sampleRate));
+void Compressor::setEnvRelease(const float envReleaseMs) {
+    smoothedCompRelease.setTargetValue(envReleaseMs);
 }
 
-void Compressor::setRatio(const float ratio_) {
-    ratio = ratio_;
+void Compressor::setRatio(const float ratio) {
+    smoothedCompRatio.setTargetValue(ratio);
 }
 
-void Compressor::setThreshHigh(const float thresh_dB_high_) {
-    thresh_dB_high = thresh_dB_high_;
+void Compressor::setThreshHigh(const float thresh_dB_high) {
+    smoothedCompThreshHigh.setTargetValue(thresh_dB_high);
 }
 
-void Compressor::setThreshLow(const float thresh_dB_low_) {
-    thresh_dB_low = thresh_dB_low_;
+void Compressor::setThreshLow(const float thresh_dB_low) {
+    smoothedCompThreshLow.setTargetValue(thresh_dB_low);
 }
 
 void Compressor::setNumPasses(const int passes_) {
@@ -57,6 +70,11 @@ void Compressor::setNumPasses(const int passes_) {
 }
 
 void Compressor::followEnv (const float inputSample, const int channelIndex, const int bandIndex) {
+    float envAttackMs = smoothedCompAttack.getNextValue();
+    float envReleaseMs = smoothedCompRelease.getNextValue();
+    float envAttackCoeff = 1.0f - std::exp(-1.0f / (envAttackMs * 0.001f * sampleRate));
+    float envReleaseCoeff = 1.0f - std::exp(-1.0f / (envReleaseMs * 0.001f * sampleRate));
+
     const float rectified = std::abs(inputSample);
     float env = envChannelByBand[channelIndex * 8 + bandIndex];
     if (rectified > env) {
@@ -69,6 +87,9 @@ void Compressor::followEnv (const float inputSample, const int channelIndex, con
 }
 
 float Compressor::computeGainChange(const int channelIndex, const int bandIndex) {
+    const float thresh_dB_high = smoothedCompThreshHigh.getNextValue();
+    const float thresh_dB_low = smoothedCompThreshLow.getNextValue();
+    const float ratio = smoothedCompRatio.getNextValue();
 
     constexpr float eps = 1e-6f;
     const float envLinear = std::max(envChannelByBand[channelIndex * 8 + bandIndex], eps);
