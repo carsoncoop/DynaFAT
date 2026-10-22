@@ -51,6 +51,10 @@ void Distortion::prepare (double sampleRate, const float drive, const float thre
 
 void Distortion::distProcess (juce::AudioBuffer<float>& buffer){
 
+    //Downsample variables
+    float hold = 0.0f;
+    double counter = 0.0f;
+
         for (int s = 0; s < buffer.getNumSamples(); s++){
 
             const float drive = smoothedDrive.getNextValue();
@@ -76,7 +80,14 @@ void Distortion::distProcess (juce::AudioBuffer<float>& buffer){
                         break;
 
                     case Downsample:
-                        //TODO
+                        if (counter == 0) {
+                            hold = signal;
+                        }
+                        signal = hold;
+                        counter += 0.5;
+                        if (counter >= static_cast<int>(juce::Decibels::gainToDecibels(drive))) {
+                            counter = 0;
+                        }
                         break;
                 }
                 signal *= output;

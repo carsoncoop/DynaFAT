@@ -87,7 +87,6 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     distortionPassesSlider.setSliderStyle (juce::Slider::IncDecButtons);
     distortionPassesSlider.setTextBoxStyle (juce::Slider::TextBoxLeft, false, 60, 24);
 
-
     //Initialize algButton text
     const juce::StringArray algChoices { "Soft Clip", "Hard Clip", "Foldback", "Downsample"};
     int idx = static_cast<int>(std::round(processorRef.getState().getRawParameterValue("algButton")->load()));
@@ -103,32 +102,36 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
         algMenu.showMenuAsync(juce::PopupMenu::Options(),
             [this] (int result) {
                 if (result == 0) {//If no selection is made
-
+                    satSlider.setTextValueSuffix(" dB");
                 }
                 else if (result == 1) {
                     algButton.setButtonText("Soft Clip");
                     processorRef.getDistortion().setDistortionType(SoftClip);
-                    threshLabel.setText("Thresh", juce::dontSendNotification);
-                    satLabel.setText("Drive", juce::dontSendNotification);
+
                 }
                 else if (result == 2) {
                     algButton.setButtonText("Hard Clip");
                     processorRef.getDistortion().setDistortionType(HardClip);
-                    threshLabel.setText("Thresh", juce::dontSendNotification);
-                    satLabel.setText("Drive", juce::dontSendNotification);
                 }
                 else if (result == 3) {
                     algButton.setButtonText("Foldback");
                     processorRef.getDistortion().setDistortionType(Foldback);
-                    threshLabel.setText("Thresh", juce::dontSendNotification);
-                    satLabel.setText("Drive", juce::dontSendNotification);
                 }
                 else if (result == 4) {
                     algButton.setButtonText("Downsample");
                     processorRef.getDistortion().setDistortionType(Downsample);
-                    threshLabel.setText("(NA)", juce::dontSendNotification);
                     satLabel.setText("Crush", juce::dontSendNotification);
+                    threshSlider.setEnabled(false);
+                    satSlider.textFromValueFunction = [] (double v) {
+                        return juce::String(juce::roundToInt(v)) + " samples";};
                 }
+                if (result != 4) {//When downsample is not selected
+                    satLabel.setText("Drive", juce::dontSendNotification);
+                    threshSlider.setEnabled(true);
+                    satSlider.textFromValueFunction = [] (double v) {
+                        return juce::String(v, 2) + " dB";};
+                }
+                satSlider.updateText();
         });
     };
 

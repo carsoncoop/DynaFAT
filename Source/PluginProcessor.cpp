@@ -130,8 +130,10 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         filter.myProcess(juce::dsp::AudioBlock<float>(buffer));
     }*/
 
+    //Distortion processing
     distortion.distProcess(buffer);
 
+    //Compressor processing
     if (compressor.getActivation()) {
         for (int s = 0; s < buffer.getNumSamples(); s++) {
             postEnvelopeFollower.setEnvDynamix(smoothedEnvDynamix.getNextValue());
@@ -141,7 +143,7 @@ void AudioPluginAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         }
     }
 
-
+    //Master gain
     for (int s = 0; s < buffer.getNumSamples(); s++) {
         const float masterGain = juce::Decibels::decibelsToGain(smoothedMasterGain.getNextValue());
         for (int c = 0; c < totalNumInputChannels; c++) {
@@ -412,7 +414,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout AudioPluginAudioProcessor::c
     juce::NormalisableRange<float> cutoffRange(20.0f, 20000.0f);
     cutoffRange.setSkewForCentre(1000.0f);
 
-    addFloatParam("drive", "drive", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f, " dB");
+    addFloatParam("drive", "drive", juce::NormalisableRange<float>(0.0f, 36.0f), 0.0f, " dB");
     addFloatParam("thresh", "thresh", juce::NormalisableRange<float>(-36.0f, 0.0f), 0.0f, " dB");
     addFloatParam("output", "output", juce::NormalisableRange<float>(-36.0f, 36.0f), 0.0f, " dB");
     addFloatParam("mix", "mix", juce::NormalisableRange<float>(0.0f, 100.0f), 100.0f, "%");

@@ -20,7 +20,6 @@ Known bugs:
 Current To-Do List:
 - Split compressor bands with Linkwitz-Riley filters once per buffer, and process each sample individually
 - Implement "passes" for compressor
-- Implement downsample in distortion.process() function
 
 Effect Class Layout:
 - Member variables store state of parameters through setter functions
