@@ -18,6 +18,7 @@ class Distortion {
     juce::SmoothedValue<float> smoothedOutput;
     juce::SmoothedValue<float> smoothedMix;
 
+
     int passes = 1;
 
     DistortionType distortionAlg = SoftClip;

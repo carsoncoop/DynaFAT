@@ -19,8 +19,7 @@ void AudioPluginAudioProcessorEditor::timerCallback()
 }
 AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p),
-    routingButtonAttachment(processorRef.getState(), "routingButton", routingButton),
-    algButtonAttachment(processorRef.getState(), "algButton", algButton),
+
     satSliderAttachment(processorRef.getState(), "drive", satSlider),
     threshSliderAttachment(processorRef.getState(), "thresh", threshSlider),
     outputSliderAttachment(processorRef.getState(), "output", outputSlider),
@@ -90,9 +89,11 @@ AudioPluginAudioProcessorEditor::AudioPluginAudioProcessorEditor (AudioPluginAud
     //Initialize algButton text
     const juce::StringArray algChoices { "Soft Clip", "Hard Clip", "Foldback", "Downsample"};
     int idx = static_cast<int>(std::round(processorRef.getState().getRawParameterValue("algButton")->load()));
+
     algButton.setButtonText(algChoices[idx]);
 
     algButton.onClick = [this]() {
+
         juce::PopupMenu algMenu;
         algMenu.addItem(1, "Soft Clip");
         algMenu.addItem(2, "Hard Clip");

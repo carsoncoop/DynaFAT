@@ -31,7 +31,6 @@ private:
 
     //Distortion
     juce::TextButton algButton;
-    juce::AudioProcessorValueTreeState::ButtonAttachment algButtonAttachment;
 
     juce::Slider satSlider;
     juce::Slider threshSlider;
@@ -94,7 +93,13 @@ private:
     juce::Label masterGainLabel{"masterGain", "Master Vol."};
 
     juce::TextButton routingButton;
-    juce::AudioProcessorValueTreeState::ButtonAttachment routingButtonAttachment;
+
+    //Text choice button attachments
+    juce::ComboBox algBox, routingBox;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> algAttachment, routingAttachment;
+    void applyAlgorithmUI (int idx);
+
+
 
     //Filter
     /*juce::TextButton filterTypeButton;
